@@ -30,7 +30,6 @@ services:
     depends_on:
       postgres-zlagoda:
         condition: service_healthy
-    entrypoint: ["./migrate.sh"]
   api-zlagoda:
     build: .
     container_name: api-zlagoda

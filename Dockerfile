@@ -11,3 +11,4 @@ RUN go build -o ./bin/api cmd/api/main.go
 
 RUN chmod +x ./run.sh
 RUN chmod +x ./migrate.sh
+ENTRYPOINT ./migrate.sh
