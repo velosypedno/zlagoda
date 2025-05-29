@@ -9,8 +9,9 @@ func SetupRoutes(c *ioc.HandlerContainer) *gin.Engine {
 	router := gin.Default()
 	api := router.Group("/api")
 	{
-		api.POST("/category", c.CategoryCreatePOSTHandler)
-		api.GET("/category/:id", c.CategoryRetrieveGETHandler)
+		api.POST("/categories", c.CategoryCreatePOSTHandler)
+		api.GET("/categories", c.CategoriesListGETHandler)
+		api.GET("/categories/:id", c.CategoryRetrieveGETHandler)
 	}
 	return router
 }

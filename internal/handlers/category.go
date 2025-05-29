@@ -9,7 +9,7 @@ import (
 )
 
 type categoryCreator interface {
-	CreateCategory(c models.CategoryCreate) error
+	CreateCategory(c models.CategoryCreate) (int, error)
 }
 
 func NewCategoryCreatePOSTHandler(service categoryCreator) gin.HandlerFunc {
@@ -25,17 +25,19 @@ func NewCategoryCreatePOSTHandler(service categoryCreator) gin.HandlerFunc {
 		model := models.CategoryCreate{
 			Name: req.Name,
 		}
-		if err := service.CreateCategory(model); err != nil {
+		id, err := service.CreateCategory(model)
+		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create category: " + err.Error()})
 			return
 		}
 
-		c.Status(http.StatusCreated)
+		c.JSON(http.StatusCreated, gin.H{"id": id})
 	}
 }
 
 type categoryReader interface {
 	GetCategoryByID(id int) (models.CategoryRetrieve, error)
+	GetCategories() ([]models.CategoryRetrieve, error)
 }
 
 func NewCategoryRetrieveGETHandler(service categoryReader) gin.HandlerFunc {
@@ -64,5 +66,17 @@ func NewCategoryRetrieveGETHandler(service categoryReader) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, resp)
+	}
+}
+
+func NewCategoryListGETHandler(service categoryReader) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		categories, err := service.GetCategories()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve categories: " + err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, categories)
 	}
 }

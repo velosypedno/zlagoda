@@ -15,6 +15,7 @@ import (
 type HandlerContainer struct {
 	CategoryCreatePOSTHandler  gin.HandlerFunc
 	CategoryRetrieveGETHandler gin.HandlerFunc
+	CategoriesListGETHandler   gin.HandlerFunc
 }
 
 func BuildHandlerContainer(c *config.Config) *HandlerContainer {
@@ -28,5 +29,6 @@ func BuildHandlerContainer(c *config.Config) *HandlerContainer {
 	return &HandlerContainer{
 		CategoryCreatePOSTHandler:  handlers.NewCategoryCreatePOSTHandler(categoryService),
 		CategoryRetrieveGETHandler: handlers.NewCategoryRetrieveGETHandler(categoryService),
+		CategoriesListGETHandler:   handlers.NewCategoryListGETHandler(categoryService),
 	}
 }
