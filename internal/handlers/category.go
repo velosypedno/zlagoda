@@ -70,6 +70,11 @@ func NewCategoryRetrieveGETHandler(service categoryReader) gin.HandlerFunc {
 }
 
 func NewCategoryListGETHandler(service categoryReader) gin.HandlerFunc {
+	type responseItem struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	}
+
 	return func(c *gin.Context) {
 		categories, err := service.GetCategories()
 		if err != nil {
@@ -77,7 +82,15 @@ func NewCategoryListGETHandler(service categoryReader) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, categories)
+		var resp []responseItem
+		for _, cat := range categories {
+			resp = append(resp, responseItem{
+				ID:   cat.ID,
+				Name: cat.Name,
+			})
+		}
+
+		c.JSON(http.StatusOK, resp)
 	}
 }
 
