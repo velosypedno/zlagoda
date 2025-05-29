@@ -12,6 +12,7 @@ func SetupRoutes(c *ioc.HandlerContainer) *gin.Engine {
 		api.POST("/categories", c.CategoryCreatePOSTHandler)
 		api.GET("/categories", c.CategoriesListGETHandler)
 		api.GET("/categories/:id", c.CategoryRetrieveGETHandler)
+		api.DELETE("/categories/:id", c.CategoryDeleteDELETEHandler)
 	}
 	return router
 }

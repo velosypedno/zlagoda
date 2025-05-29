@@ -80,3 +80,26 @@ func NewCategoryListGETHandler(service categoryReader) gin.HandlerFunc {
 		c.JSON(http.StatusOK, categories)
 	}
 }
+
+type categoryRemover interface {
+	DeleteCategory(id int) error
+}
+
+func NewCategoryDeleteDELETEHandler(service categoryRemover) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		idStr := c.Param("id")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+			return
+		}
+
+		err = service.DeleteCategory(id)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete category: " + err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Category deleted successfully"})
+	}
+}

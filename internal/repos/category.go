@@ -56,3 +56,9 @@ func (r *CategoryRepo) RetrieveCategories() ([]models.CategoryRetrieve, error) {
 
 	return categories, nil
 }
+
+func (r *CategoryRepo) DeleteCategory(id int) error {
+	query := `DELETE FROM category WHERE category_id = $1`
+	_, err := r.db.Exec(query, id)
+	return err
+}
