@@ -7,6 +7,7 @@ type CategoryRepo interface {
 	RetrieveCategoryByID(id int) (models.CategoryRetrieve, error)
 	RetrieveCategories() ([]models.CategoryRetrieve, error)
 	DeleteCategory(id int) error
+	UpdateCategory(id int, c models.CategoryUpdate) error
 }
 
 type CategoryService struct {
@@ -31,4 +32,8 @@ func (s *CategoryService) GetCategories() ([]models.CategoryRetrieve, error) {
 
 func (s *CategoryService) DeleteCategory(id int) error {
 	return s.repo.DeleteCategory(id)
+}
+
+func (s *CategoryService) UpdateCategory(id int, c models.CategoryUpdate) error {
+	return s.repo.UpdateCategory(id, c)
 }

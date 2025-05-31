@@ -17,6 +17,7 @@ type HandlerContainer struct {
 	CategoryRetrieveGETHandler  gin.HandlerFunc
 	CategoriesListGETHandler    gin.HandlerFunc
 	CategoryDeleteDELETEHandler gin.HandlerFunc
+	CategoryUpdatePATCHHandler  gin.HandlerFunc
 }
 
 func BuildHandlerContainer(c *config.Config) *HandlerContainer {
@@ -32,5 +33,6 @@ func BuildHandlerContainer(c *config.Config) *HandlerContainer {
 		CategoryRetrieveGETHandler:  handlers.NewCategoryRetrieveGETHandler(categoryService),
 		CategoriesListGETHandler:    handlers.NewCategoryListGETHandler(categoryService),
 		CategoryDeleteDELETEHandler: handlers.NewCategoryDeleteDELETEHandler(categoryService),
+		CategoryUpdatePATCHHandler:  handlers.NewCategoryUpdatePATCHHandler(categoryService),
 	}
 }

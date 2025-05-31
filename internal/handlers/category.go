@@ -116,3 +116,39 @@ func NewCategoryDeleteDELETEHandler(service categoryRemover) gin.HandlerFunc {
 		c.JSON(http.StatusOK, gin.H{"message": "Category deleted successfully"})
 	}
 }
+
+type categoryUpdater interface {
+	UpdateCategory(id int, model models.CategoryUpdate) error
+}
+
+func NewCategoryUpdatePATCHHandler(service categoryUpdater) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		idStr := c.Param("id")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+			return
+		}
+
+		type request struct {
+			Name string `json:"name" binding:"required"`
+		}
+		var req request
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
+			return
+		}
+
+		model := models.CategoryUpdate{
+			Name: req.Name,
+		}
+
+		err = service.UpdateCategory(id, model)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update category: " + err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Category updated successfully"})
+	}
+}
