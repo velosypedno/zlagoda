@@ -23,53 +23,6 @@ func isDecimalValid(salary float64) bool {
 	return before <= 13 && after <= 4
 }
 
-func isEmployeeUpdateValid(empl models.EmployeeUpdate) bool {
-	if len(empl.Surname) > 50 {
-		return false
-	}
-	if len(empl.Name) > 50 {
-		return false
-	}
-	if len(empl.Patronymic) > 50 {
-		return false
-	}
-	if len(empl.Role) > 10 {
-		return false
-	}
-	if empl.Salary < 0 {
-		return false
-	}
-	if !isDecimalValid(empl.Salary) {
-		return false
-	}
-
-	now := time.Now()
-	eighteenYearsOld := empl.DateOfBirth.AddDate(18, 0, 0)
-	// if empl.DateOfStart.After(now) {
-	// 	return false
-	// }
-	if eighteenYearsOld.After(now) {
-		return false
-	}
-	if eighteenYearsOld.After(empl.DateOfStart) {
-		return false
-	}
-
-	if !strings.HasPrefix(empl.PhoneNumber, "+380") || len(empl.PhoneNumber) != 13 {
-		return false
-	}
-	if len(empl.City) > 50 {
-		return false
-	}
-	if len(empl.Street) > 50 {
-		return false
-	}
-	if len(empl.ZipCode) > 9 {
-		return false
-	}
-	return true
-}
-
 type employeeCreator interface {
 	CreateEmployee(c models.EmployeeCreate) (string, error)
 }
@@ -77,17 +30,17 @@ type employeeCreator interface {
 func NewEmployeeCreatePOSTHandler(service employeeCreator) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		type request struct {
-			Surname     string  `json:"empl_surname" binding:"required,max=50"`
-			Name        string  `json:"empl_name" binding:"required,max=50"`
-			Patronymic  string  `json:"empl_patronymic" binding:"max=50"`
-			Role        string  `json:"empl_role" binding:"required,max=10"`
-			Salary      float64 `json:"salary" binding:"required,gte=0"`
-			DateOfBirth string  `json:"date_of_birth" binding:"required"`
-			DateOfStart string  `json:"date_of_start" binding:"required"`
-			PhoneNumber string  `json:"phone_number" binding:"required,len=13,startswith=+380"`
-			City        string  `json:"city" binding:"max=50"`
-			Street      string  `json:"street" binding:"max=50"`
-			ZipCode     string  `json:"zip_code" binding:"max=9"`
+			Surname     *string  `json:"empl_surname" binding:"omitempty,required,max=50"`
+			Name        *string  `json:"empl_name" binding:"omitempty,required,max=50"`
+			Patronymic  *string  `json:"empl_patronymic" binding:"omitempty,max=50"`
+			Role        *string  `json:"empl_role" binding:"omitempty,required,max=10"`
+			Salary      *float64 `json:"salary" binding:"omitempty,required,gte=0"`
+			DateOfBirth *string  `json:"date_of_birth" binding:"omitempty,required"`
+			DateOfStart *string  `json:"date_of_start" binding:"omitempty,required"`
+			PhoneNumber *string  `json:"phone_number" binding:"omitempty,required,len=13,startswith=+380"`
+			City        *string  `json:"city" binding:"omitempty,required,max=50"`
+			Street      *string  `json:"street" binding:"omitempty,required,max=50"`
+			ZipCode     *string  `json:"zip_code" binding:"omitempty,required,max=9"`
 		}
 		var req request
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -95,12 +48,12 @@ func NewEmployeeCreatePOSTHandler(service employeeCreator) gin.HandlerFunc {
 			return
 		}
 
-		birthDate, err := time.Parse("2006-01-02", req.DateOfBirth)
+		birthDate, err := time.Parse("2006-01-02", *req.DateOfBirth)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid date of birth format"})
 			return
 		}
-		startDate, err := time.Parse("2006-01-02", req.DateOfStart)
+		startDate, err := time.Parse("2006-01-02", *req.DateOfStart)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid date of start format"})
 			return
@@ -115,7 +68,7 @@ func NewEmployeeCreatePOSTHandler(service employeeCreator) gin.HandlerFunc {
 			return
 		}
 
-		if !isDecimalValid(req.Salary) {
+		if !isDecimalValid(*req.Salary) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid salary"})
 			return
 		}
@@ -126,8 +79,8 @@ func NewEmployeeCreatePOSTHandler(service employeeCreator) gin.HandlerFunc {
 			Patronymic:  req.Patronymic,
 			Role:        req.Role,
 			Salary:      req.Salary,
-			DateOfBirth: birthDate,
-			DateOfStart: startDate,
+			DateOfBirth: &birthDate,
+			DateOfStart: &startDate,
 			PhoneNumber: req.PhoneNumber,
 			City:        req.City,
 			Street:      req.Street,
@@ -152,18 +105,18 @@ type employeeReader interface {
 func NewEmployeeRetrieveGETHandler(service employeeReader) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		type response struct {
-			ID          string  `json:"employee_id"`
-			Surname     string  `json:"empl_surname"`
-			Name        string  `json:"empl_name"`
-			Patronymic  string  `json:"empl_patronymic"`
-			Role        string  `json:"empl_role"`
-			Salary      float64 `json:"salary"`
-			DateOfBirth string  `json:"date_of_birth"`
-			DateOfStart string  `json:"date_of_start"`
-			PhoneNumber string  `json:"phone_number"`
-			City        string  `json:"city"`
-			Street      string  `json:"street"`
-			ZipCode     string  `json:"zip_code"`
+			ID          *string  `json:"employee_id"`
+			Surname     *string  `json:"empl_surname"`
+			Name        *string  `json:"empl_name"`
+			Patronymic  *string  `json:"empl_patronymic"`
+			Role        *string  `json:"empl_role"`
+			Salary      *float64 `json:"salary"`
+			DateOfBirth *string  `json:"date_of_birth"`
+			DateOfStart *string  `json:"date_of_start"`
+			PhoneNumber *string  `json:"phone_number"`
+			City        *string  `json:"city"`
+			Street      *string  `json:"street"`
+			ZipCode     *string  `json:"zip_code"`
 		}
 		var id string = c.Param("id")
 		if len(id) != 10 {
@@ -176,6 +129,8 @@ func NewEmployeeRetrieveGETHandler(service employeeReader) gin.HandlerFunc {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Employee not found: " + err.Error()})
 			return
 		}
+		birthDate := employee.DateOfBirth.Format("2006-01-02")
+		startDate := employee.DateOfStart.Format("2006-01-02")
 
 		resp := response{
 			ID:          employee.ID,
@@ -184,8 +139,8 @@ func NewEmployeeRetrieveGETHandler(service employeeReader) gin.HandlerFunc {
 			Patronymic:  employee.Patronymic,
 			Role:        employee.Role,
 			Salary:      employee.Salary,
-			DateOfBirth: employee.DateOfBirth.Format("2006-01-02"),
-			DateOfStart: employee.DateOfStart.Format("2006-01-02"),
+			DateOfBirth: &birthDate,
+			DateOfStart: &startDate,
 			PhoneNumber: employee.PhoneNumber,
 			City:        employee.City,
 			Street:      employee.Street,
@@ -198,18 +153,18 @@ func NewEmployeeRetrieveGETHandler(service employeeReader) gin.HandlerFunc {
 
 func NewEmployeesListGETHandler(service employeeReader) gin.HandlerFunc {
 	type responseItem struct {
-		ID          string  `json:"employee_id"`
-		Surname     string  `json:"empl_surname"`
-		Name        string  `json:"empl_name"`
-		Patronymic  string  `json:"empl_patronymic"`
-		Role        string  `json:"empl_role"`
-		Salary      float64 `json:"salary"`
-		DateOfBirth string  `json:"date_of_birth"`
-		DateOfStart string  `json:"date_of_start"`
-		PhoneNumber string  `json:"phone_number"`
-		City        string  `json:"city"`
-		Street      string  `json:"street"`
-		ZipCode     string  `json:"zip_code"`
+		ID          *string  `json:"employee_id"`
+		Surname     *string  `json:"empl_surname"`
+		Name        *string  `json:"empl_name"`
+		Patronymic  *string  `json:"empl_patronymic"`
+		Role        *string  `json:"empl_role"`
+		Salary      *float64 `json:"salary"`
+		DateOfBirth *string  `json:"date_of_birth"`
+		DateOfStart *string  `json:"date_of_start"`
+		PhoneNumber *string  `json:"phone_number"`
+		City        *string  `json:"city"`
+		Street      *string  `json:"street"`
+		ZipCode     *string  `json:"zip_code"`
 	}
 
 	return func(c *gin.Context) {
@@ -221,6 +176,8 @@ func NewEmployeesListGETHandler(service employeeReader) gin.HandlerFunc {
 
 		var resp []responseItem
 		for _, employee := range employees {
+			birthDate := employee.DateOfBirth.Format("2006-01-02")
+			startDate := employee.DateOfStart.Format("2006-01-02")
 			resp = append(resp, responseItem{
 				ID:          employee.ID,
 				Surname:     employee.Surname,
@@ -228,8 +185,8 @@ func NewEmployeesListGETHandler(service employeeReader) gin.HandlerFunc {
 				Patronymic:  employee.Patronymic,
 				Role:        employee.Role,
 				Salary:      employee.Salary,
-				DateOfBirth: employee.DateOfBirth.Format("2006-01-02"),
-				DateOfStart: employee.DateOfStart.Format("2006-01-02"),
+				DateOfBirth: &birthDate,
+				DateOfStart: &startDate,
 				PhoneNumber: employee.PhoneNumber,
 				City:        employee.City,
 				Street:      employee.Street,
@@ -277,17 +234,17 @@ func NewEmployeeUpdatePATCHHandler(service employeeUpdater) gin.HandlerFunc {
 		}
 
 		type request struct {
-			Surname     *string  `json:"empl_surname"`
-			Name        *string  `json:"empl_name"`
-			Patronymic  *string  `json:"empl_patronymic"`
-			Role        *string  `json:"empl_role"`
-			Salary      *float64 `json:"salary"`
-			DateOfBirth *string  `json:"date_of_birth"`
-			DateOfStart *string  `json:"date_of_start"`
-			PhoneNumber *string  `json:"phone_number"`
-			City        *string  `json:"city"`
-			Street      *string  `json:"street"`
-			ZipCode     *string  `json:"zip_code"`
+			Surname     *string  `json:"empl_surname" binding:"omitempty,max=50"`
+			Name        *string  `json:"empl_name" binding:"omitempty,max=50"`
+			Patronymic  *string  `json:"empl_patronymic" binding:"omitempty,max=50"`
+			Role        *string  `json:"empl_role" binding:"omitempty,max=10"`
+			Salary      *float64 `json:"salary" binding:"omitempty,gte=0"`
+			DateOfBirth *string  `json:"date_of_birth" binding:"omitempty"`
+			DateOfStart *string  `json:"date_of_start" binding:"omitempty"`
+			PhoneNumber *string  `json:"phone_number" binding:"omitempty,len=13,startswith=+380"`
+			City        *string  `json:"city" binding:"omitempty,max=50"`
+			Street      *string  `json:"street" binding:"omitempty,max=50"`
+			ZipCode     *string  `json:"zip_code" binding:"omitempty,max=9"`
 		}
 		var req request
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -302,19 +259,19 @@ func NewEmployeeUpdatePATCHHandler(service employeeUpdater) gin.HandlerFunc {
 		currentBirthDateStr := employeeCurrentState.DateOfBirth.Format("2006-01-02")
 		currentStartDateStr := employeeCurrentState.DateOfStart.Format("2006-01-02")
 		if req.Surname == nil {
-			req.Surname = &employeeCurrentState.Surname
+			req.Surname = employeeCurrentState.Surname
 		}
 		if req.Name == nil {
-			req.Name = &employeeCurrentState.Name
+			req.Name = employeeCurrentState.Name
 		}
 		if req.Patronymic == nil {
-			req.Patronymic = &employeeCurrentState.Patronymic
+			req.Patronymic = employeeCurrentState.Patronymic
 		}
 		if req.Role == nil {
-			req.Role = &employeeCurrentState.Role
+			req.Role = employeeCurrentState.Role
 		}
 		if req.Salary == nil {
-			req.Salary = &employeeCurrentState.Salary
+			req.Salary = employeeCurrentState.Salary
 		}
 		if req.DateOfBirth == nil {
 			req.DateOfBirth = &currentBirthDateStr
@@ -323,16 +280,16 @@ func NewEmployeeUpdatePATCHHandler(service employeeUpdater) gin.HandlerFunc {
 			req.DateOfStart = &currentStartDateStr
 		}
 		if req.PhoneNumber == nil {
-			req.PhoneNumber = &employeeCurrentState.PhoneNumber
+			req.PhoneNumber = employeeCurrentState.PhoneNumber
 		}
 		if req.City == nil {
-			req.City = &employeeCurrentState.City
+			req.City = employeeCurrentState.City
 		}
 		if req.Street == nil {
-			req.Street = &employeeCurrentState.Street
+			req.Street = employeeCurrentState.Street
 		}
 		if req.ZipCode == nil {
-			req.ZipCode = &employeeCurrentState.ZipCode
+			req.ZipCode = employeeCurrentState.ZipCode
 		}
 
 		birthDate, err := time.Parse("2006-01-02", *req.DateOfBirth)
@@ -345,23 +302,33 @@ func NewEmployeeUpdatePATCHHandler(service employeeUpdater) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid date of start format"})
 			return
 		}
+		now := time.Now()
+		eighteenYearsOld := birthDate.AddDate(18, 0, 0)
+		// if empl.DateOfStart.After(now) {
+		// 	return false
+		// }
+		if eighteenYearsOld.After(now) || eighteenYearsOld.After(startDate) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid dates"})
+			return
+		}
+
+		if !isDecimalValid(*req.Salary) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid salary"})
+			return
+		}
 
 		model := models.EmployeeUpdate{
-			Surname:     *req.Surname,
-			Name:        *req.Name,
-			Patronymic:  *req.Patronymic,
-			Role:        *req.Role,
-			Salary:      *req.Salary,
-			DateOfBirth: birthDate,
-			DateOfStart: startDate,
-			PhoneNumber: *req.PhoneNumber,
-			City:        *req.City,
-			Street:      *req.Street,
-			ZipCode:     *req.ZipCode,
-		}
-		if !isEmployeeUpdateValid(model) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: input values are out of bounds"})
-			return
+			Surname:     req.Surname,
+			Name:        req.Name,
+			Patronymic:  req.Patronymic,
+			Role:        req.Role,
+			Salary:      req.Salary,
+			DateOfBirth: &birthDate,
+			DateOfStart: &startDate,
+			PhoneNumber: req.PhoneNumber,
+			City:        req.City,
+			Street:      req.Street,
+			ZipCode:     req.ZipCode,
 		}
 
 		err = service.UpdateEmployee(id, model)

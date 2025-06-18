@@ -2,39 +2,10 @@ package handlers
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/velosypedno/zlagoda/internal/models"
 )
-
-func isCustomerCardUpdateValid(card models.CustomerCardUpdate) bool {
-	if len(card.Surname) > 50 {
-		return false
-	}
-	if len(card.Name) > 50 {
-		return false
-	}
-	if len(card.Patronymic) > 50 {
-		return false
-	}
-	if !strings.HasPrefix(card.PhoneNumber, "+380") || len(card.PhoneNumber) != 13 {
-		return false
-	}
-	if len(card.City) > 50 {
-		return false
-	}
-	if len(card.Street) > 50 {
-		return false
-	}
-	if len(card.ZipCode) > 9 {
-		return false
-	}
-	if card.Percent < 0 {
-		return false
-	}
-	return true
-}
 
 type customerCardCreator interface {
 	CreateCustomerCard(c models.CustomerCardCreate) (string, error)
@@ -43,14 +14,14 @@ type customerCardCreator interface {
 func NewCustomerCardCreatePOSTHandler(service customerCardCreator) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		type request struct {
-			Surname     string `json:"cust_surname" binding:"required,max=50"`
-			Name        string `json:"cust_name" binding:"required,max=50"`
-			Patronymic  string `json:"cust_patronymic" binding:"max=50"`
-			PhoneNumber string `json:"phone_number" binding:"required,len=13,startswith=+380"`
-			City        string `json:"city" binding:"max=50"`
-			Street      string `json:"street" binding:"max=50"`
-			ZipCode     string `json:"zip_code" binding:"max=9"`
-			Percent     int    `json:"percent" binding:"required,gte=0"`
+			Surname     *string `json:"cust_surname" binding:"omitempty,required,max=50"`
+			Name        *string `json:"cust_name" binding:"omitempty,required,max=50"`
+			Patronymic  *string `json:"cust_patronymic" binding:"omitempty,max=50"`
+			PhoneNumber *string `json:"phone_number" binding:"omitempty,required,len=13,startswith=+380"`
+			City        *string `json:"city" binding:"omitempty,max=50"`
+			Street      *string `json:"street" binding:"omitempty,max=50"`
+			ZipCode     *string `json:"zip_code" binding:"omitempty,max=9"`
+			Percent     *int    `json:"percent" binding:"omitempty,required,gte=0"`
 		}
 		var req request
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -86,15 +57,15 @@ type customerCardReader interface {
 func NewCustomerCardRetrieveGETHandler(service customerCardReader) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		type response struct {
-			CardNumber  string `json:"card_number"`
-			Surname     string `json:"cust_surname"`
-			Name        string `json:"cust_name"`
-			Patronymic  string `json:"cust_patronymic"`
-			PhoneNumber string `json:"phone_number"`
-			City        string `json:"city"`
-			Street      string `json:"street"`
-			ZipCode     string `json:"zip_code"`
-			Percent     int    `json:"percent"`
+			CardNumber  *string `json:"card_number"`
+			Surname     *string `json:"cust_surname"`
+			Name        *string `json:"cust_name"`
+			Patronymic  *string `json:"cust_patronymic"`
+			PhoneNumber *string `json:"phone_number"`
+			City        *string `json:"city"`
+			Street      *string `json:"street"`
+			ZipCode     *string `json:"zip_code"`
+			Percent     *int    `json:"percent"`
 		}
 
 		cardNumber := c.Param("card_number")
@@ -127,15 +98,15 @@ func NewCustomerCardRetrieveGETHandler(service customerCardReader) gin.HandlerFu
 
 func NewCustomerCardsListGETHandler(service customerCardReader) gin.HandlerFunc {
 	type responseItem struct {
-		CardNumber  string `json:"card_number"`
-		Surname     string `json:"cust_surname"`
-		Name        string `json:"cust_name"`
-		Patronymic  string `json:"cust_patronymic"`
-		PhoneNumber string `json:"phone_number"`
-		City        string `json:"city"`
-		Street      string `json:"street"`
-		ZipCode     string `json:"zip_code"`
-		Percent     int    `json:"percent"`
+		CardNumber  *string `json:"card_number"`
+		Surname     *string `json:"cust_surname"`
+		Name        *string `json:"cust_name"`
+		Patronymic  *string `json:"cust_patronymic"`
+		PhoneNumber *string `json:"phone_number"`
+		City        *string `json:"city"`
+		Street      *string `json:"street"`
+		ZipCode     *string `json:"zip_code"`
+		Percent     *int    `json:"percent"`
 	}
 
 	return func(c *gin.Context) {
@@ -200,14 +171,14 @@ func NewCustomerCardUpdatePATCHHandler(service customerCardUpdater) gin.HandlerF
 		}
 
 		type request struct {
-			Surname     *string `json:"cust_surname"`
-			Name        *string `json:"cust_name"`
-			Patronymic  *string `json:"cust_patronymic"`
-			PhoneNumber *string `json:"phone_number"`
-			City        *string `json:"city"`
-			Street      *string `json:"street"`
-			ZipCode     *string `json:"zip_code"`
-			Percent     *int    `json:"percent"`
+			Surname     *string `json:"cust_surname" binding:"omitempty,max=50"`
+			Name        *string `json:"cust_name" binding:"omitempty,max=50"`
+			Patronymic  *string `json:"cust_patronymic" binding:"omitempty,max=50"`
+			PhoneNumber *string `json:"phone_number" binding:"omitempty,len=13,startswith=+380"`
+			City        *string `json:"city" binding:"omitempty,max=50"`
+			Street      *string `json:"street" binding:"omitempty,max=50"`
+			ZipCode     *string `json:"zip_code" binding:"omitempty,max=9"`
+			Percent     *int    `json:"percent" binding:"omitempty,gte=0"`
 		}
 		var req request
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -220,43 +191,39 @@ func NewCustomerCardUpdatePATCHHandler(service customerCardUpdater) gin.HandlerF
 			custCardCurrentState = models.CustomerCardRetrieve{}
 		}
 		if req.Surname == nil {
-			req.Surname = &custCardCurrentState.Surname
+			req.Surname = custCardCurrentState.Surname
 		}
 		if req.Name == nil {
-			req.Name = &custCardCurrentState.Name
+			req.Name = custCardCurrentState.Name
 		}
 		if req.Patronymic == nil {
-			req.Patronymic = &custCardCurrentState.Patronymic
+			req.Patronymic = custCardCurrentState.Patronymic
 		}
 		if req.PhoneNumber == nil {
-			req.PhoneNumber = &custCardCurrentState.PhoneNumber
+			req.PhoneNumber = custCardCurrentState.PhoneNumber
 		}
 		if req.City == nil {
-			req.City = &custCardCurrentState.City
+			req.City = custCardCurrentState.City
 		}
 		if req.Street == nil {
-			req.Street = &custCardCurrentState.Street
+			req.Street = custCardCurrentState.Street
 		}
 		if req.ZipCode == nil {
-			req.ZipCode = &custCardCurrentState.ZipCode
+			req.ZipCode = custCardCurrentState.ZipCode
 		}
 		if req.Percent == nil {
-			req.Percent = &custCardCurrentState.Percent
+			req.Percent = custCardCurrentState.Percent
 		}
 
 		model := models.CustomerCardUpdate{
-			Surname:     *req.Surname,
-			Name:        *req.Name,
-			Patronymic:  *req.Patronymic,
-			PhoneNumber: *req.PhoneNumber,
-			City:        *req.City,
-			Street:      *req.Street,
-			ZipCode:     *req.ZipCode,
-			Percent:     *req.Percent,
-		}
-		if !isCustomerCardUpdateValid(model) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: input values are out of bounds"})
-			return
+			Surname:     req.Surname,
+			Name:        req.Name,
+			Patronymic:  req.Patronymic,
+			PhoneNumber: req.PhoneNumber,
+			City:        req.City,
+			Street:      req.Street,
+			ZipCode:     req.ZipCode,
+			Percent:     req.Percent,
 		}
 
 		err = service.UpdateCustomerCard(cardNumber, model)
