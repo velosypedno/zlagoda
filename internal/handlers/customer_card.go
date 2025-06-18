@@ -8,7 +8,7 @@ import (
 	"github.com/velosypedno/zlagoda/internal/models"
 )
 
-func validateCustomerCard(card *models.CustomerCardCreate) bool {
+func isCustomerCardUpdateValid(card models.CustomerCardUpdate) bool {
 	if len(card.Surname) > 50 {
 		return false
 	}
@@ -43,14 +43,14 @@ type customerCardCreator interface {
 func NewCustomerCardCreatePOSTHandler(service customerCardCreator) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		type request struct {
-			Surname     string `json:"cust_surname" binding:"required"`
-			Name        string `json:"cust_name" binding:"required"`
-			Patronymic  string `json:"cust_patronymic"`
-			PhoneNumber string `json:"phone_number" binding:"required"`
-			City        string `json:"city"`
-			Street      string `json:"street"`
-			ZipCode     string `json:"zip_code"`
-			Percent     int    `json:"percent" binding:"required"`
+			Surname     string `json:"cust_surname" binding:"required,max=50"`
+			Name        string `json:"cust_name" binding:"required,max=50"`
+			Patronymic  string `json:"cust_patronymic" binding:"max=50"`
+			PhoneNumber string `json:"phone_number" binding:"required,len=13,startswith=+380"`
+			City        string `json:"city" binding:"max=50"`
+			Street      string `json:"street" binding:"max=50"`
+			ZipCode     string `json:"zip_code" binding:"max=9"`
+			Percent     int    `json:"percent" binding:"required,gte=0,lte=100"`
 		}
 		var req request
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -66,10 +66,6 @@ func NewCustomerCardCreatePOSTHandler(service customerCardCreator) gin.HandlerFu
 			Street:      req.Street,
 			ZipCode:     req.ZipCode,
 			Percent:     req.Percent,
-		}
-		if !validateCustomerCard(&model) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Validation failed: input values are out of bounds"})
-			return
 		}
 
 		id, err := service.CreateCustomerCard(model)
@@ -129,7 +125,7 @@ func NewCustomerCardRetrieveGETHandler(service customerCardReader) gin.HandlerFu
 	}
 }
 
-func NewCustomerCardListsGETHandler(service customerCardReader) gin.HandlerFunc {
+func NewCustomerCardsListGETHandler(service customerCardReader) gin.HandlerFunc {
 	type responseItem struct {
 		CardNumber  string `json:"card_number"`
 		Surname     string `json:"cust_surname"`
@@ -192,6 +188,7 @@ func NewCustomerCardDeleteDELETEHandler(service customerCardRemover) gin.Handler
 
 type customerCardUpdater interface {
 	UpdateCustomerCard(cardNumber string, c models.CustomerCardUpdate) error
+	GetCustomerCardByCardNumber(cardNumber string) (models.CustomerCardRetrieve, error)
 }
 
 func NewCustomerCardUpdatePATCHHandler(service customerCardUpdater) gin.HandlerFunc {
@@ -203,14 +200,14 @@ func NewCustomerCardUpdatePATCHHandler(service customerCardUpdater) gin.HandlerF
 		}
 
 		type request struct {
-			Surname     string `json:"cust_surname" binding:"required"`
-			Name        string `json:"cust_name" binding:"required"`
-			Patronymic  string `json:"cust_patronymic"`
-			PhoneNumber string `json:"phone_number" binding:"required"`
-			City        string `json:"city"`
-			Street      string `json:"street"`
-			ZipCode     string `json:"zip_code"`
-			Percent     int    `json:"percent" binding:"required"`
+			Surname     *string `json:"cust_surname"`
+			Name        *string `json:"cust_name"`
+			Patronymic  *string `json:"cust_patronymic"`
+			PhoneNumber *string `json:"phone_number"`
+			City        *string `json:"city"`
+			Street      *string `json:"street"`
+			ZipCode     *string `json:"zip_code"`
+			Percent     *int    `json:"percent"`
 		}
 		var req request
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -218,18 +215,51 @@ func NewCustomerCardUpdatePATCHHandler(service customerCardUpdater) gin.HandlerF
 			return
 		}
 
-		model := models.CustomerCardUpdate{
-			Surname:     req.Surname,
-			Name:        req.Name,
-			Patronymic:  req.Patronymic,
-			PhoneNumber: req.PhoneNumber,
-			City:        req.City,
-			Street:      req.Street,
-			ZipCode:     req.ZipCode,
-			Percent:     req.Percent,
+		custCardCurrentState, err := service.GetCustomerCardByCardNumber(cardNumber)
+		if err != nil {
+			custCardCurrentState = models.CustomerCardRetrieve{}
+		}
+		if req.Surname == nil {
+			req.Surname = &custCardCurrentState.Surname
+		}
+		if req.Name == nil {
+			req.Name = &custCardCurrentState.Name
+		}
+		if req.Patronymic == nil {
+			req.Patronymic = &custCardCurrentState.Patronymic
+		}
+		if req.PhoneNumber == nil {
+			req.PhoneNumber = &custCardCurrentState.PhoneNumber
+		}
+		if req.City == nil {
+			req.City = &custCardCurrentState.City
+		}
+		if req.Street == nil {
+			req.Street = &custCardCurrentState.Street
+		}
+		if req.ZipCode == nil {
+			req.ZipCode = &custCardCurrentState.ZipCode
+		}
+		if req.Percent == nil {
+			req.Percent = &custCardCurrentState.Percent
 		}
 
-		err := service.UpdateCustomerCard(cardNumber, model)
+		model := models.CustomerCardUpdate{
+			Surname:     *req.Surname,
+			Name:        *req.Name,
+			Patronymic:  *req.Patronymic,
+			PhoneNumber: *req.PhoneNumber,
+			City:        *req.City,
+			Street:      *req.Street,
+			ZipCode:     *req.ZipCode,
+			Percent:     *req.Percent,
+		}
+		if !isCustomerCardUpdateValid(model) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: input values are out of bounds"})
+			return
+		}
+
+		err = service.UpdateCustomerCard(cardNumber, model)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update customer card: " + err.Error()})
 			return

@@ -9,20 +9,10 @@ import (
 	"github.com/velosypedno/zlagoda/internal/models"
 )
 
-type CustomerCardRepo struct {
-	db *sql.DB
-}
-
-func NewCustomerCardRepo(db *sql.DB) *CustomerCardRepo {
-	return &CustomerCardRepo{
-		db: db,
-	}
-}
-
-func generateCardNumber() string {
+func generateId(length int) string {
 	var symbols = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
 
-	b := make([]rune, 13)
+	b := make([]rune, length)
 	for i := range b {
 		b[i] = symbols[rand.Intn(len(symbols))]
 	}
@@ -50,12 +40,22 @@ func getNewCardNumber(r *CustomerCardRepo) (string, error) {
 
 	var newCardNumber string
 	for {
-		newCardNumber = generateCardNumber()
+		newCardNumber = generateId(13)
 		if !slices.Contains(cardNumbers, newCardNumber) {
 			break
 		}
 	}
 	return newCardNumber, err
+}
+
+type CustomerCardRepo struct {
+	db *sql.DB
+}
+
+func NewCustomerCardRepo(db *sql.DB) *CustomerCardRepo {
+	return &CustomerCardRepo{
+		db: db,
+	}
 }
 
 func (r *CustomerCardRepo) CreateCustomerCard(c models.CustomerCardCreate) (string, error) {
@@ -109,10 +109,8 @@ func (r *CustomerCardRepo) RetrieveCustomerCardByCardNumber(cardNumber string) (
 		FROM customer_card 
 		WHERE card_number = $1
 	`
-	row := r.db.QueryRow(query, cardNumber)
-
 	var customerCard models.CustomerCardRetrieve
-	err := row.Scan(
+	err := r.db.QueryRow(query, cardNumber).Scan(
 		&customerCard.CardNumber,
 		&customerCard.Surname,
 		&customerCard.Name,
@@ -190,7 +188,7 @@ func (r *CustomerCardRepo) UpdateCustomerCard(cardNumber string, c models.Custom
 			city = $6,
 			street = $7,
 			zip_code = $8,
-			percent = $9,
+			percent = $9
 		WHERE card_number = $1
 	`
 	_, err := r.db.Exec(

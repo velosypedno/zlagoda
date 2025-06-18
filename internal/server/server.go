@@ -27,11 +27,17 @@ func SetupRoutes(c *ioc.HandlerContainer) *gin.Engine {
 		api.DELETE("/categories/:id", c.CategoryDeleteDELETEHandler)
 		api.PATCH("/categories/:id", c.CategoryUpdatePATCHHandler)
 
-		api.POST("/customer-card", c.CustomerCardCreatePOSTHandler)
+		api.POST("/customer-cards", c.CustomerCardCreatePOSTHandler)
 		api.GET("/customer-cards", c.CustomerCardsListGETHandler)
-		api.GET("/customer-card/:card_number", c.CustomerCardRetrieveGETHandler)
-		api.DELETE("/customer-card/:card_number", c.CustomerCardDeleteDELETEHandler)
-		api.PATCH("/customer-card/:card_number", c.CustomerCardUpdatePATCHHandler)
+		api.GET("/customer-cards/:card_number", c.CustomerCardRetrieveGETHandler)
+		api.DELETE("/customer-cards/:card_number", c.CustomerCardDeleteDELETEHandler)
+		api.PATCH("/customer-cards/:card_number", c.CustomerCardUpdatePATCHHandler)
+
+		api.POST("/employees", c.EmployeeCreatePOSTHandler)
+		api.GET("/employees", c.EmployeesListGETHandler)
+		api.GET("/employees/:id", c.EmployeeRetrieveGETHandler)
+		api.DELETE("/employees/:id", c.EmployeeDeleteDELETEHandler)
+		api.PATCH("/employees/:id", c.EmployeeUpdatePATCHHandler)
 	}
 	return router
 }

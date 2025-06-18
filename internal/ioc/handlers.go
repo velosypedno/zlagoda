@@ -24,6 +24,12 @@ type HandlerContainer struct {
 	CustomerCardsListGETHandler     gin.HandlerFunc
 	CustomerCardDeleteDELETEHandler gin.HandlerFunc
 	CustomerCardUpdatePATCHHandler  gin.HandlerFunc
+
+	EmployeeCreatePOSTHandler   gin.HandlerFunc
+	EmployeeRetrieveGETHandler  gin.HandlerFunc
+	EmployeesListGETHandler     gin.HandlerFunc
+	EmployeeDeleteDELETEHandler gin.HandlerFunc
+	EmployeeUpdatePATCHHandler  gin.HandlerFunc
 }
 
 func BuildHandlerContainer(c *config.Config) *HandlerContainer {
@@ -37,6 +43,9 @@ func BuildHandlerContainer(c *config.Config) *HandlerContainer {
 	customerCardRepo := repos.NewCustomerCardRepo(db)
 	customerCardService := services.NewCustomerCardService(customerCardRepo)
 
+	employeeRepo := repos.NewEmployeeRepo(db)
+	employeeService := services.NewEmployeeService(employeeRepo)
+
 	return &HandlerContainer{
 		CategoryCreatePOSTHandler:   handlers.NewCategoryCreatePOSTHandler(categoryService),
 		CategoryRetrieveGETHandler:  handlers.NewCategoryRetrieveGETHandler(categoryService),
@@ -46,8 +55,14 @@ func BuildHandlerContainer(c *config.Config) *HandlerContainer {
 
 		CustomerCardCreatePOSTHandler:   handlers.NewCustomerCardCreatePOSTHandler(customerCardService),
 		CustomerCardRetrieveGETHandler:  handlers.NewCustomerCardRetrieveGETHandler(customerCardService),
-		CustomerCardsListGETHandler:     handlers.NewCustomerCardListsGETHandler(customerCardService),
+		CustomerCardsListGETHandler:     handlers.NewCustomerCardsListGETHandler(customerCardService),
 		CustomerCardDeleteDELETEHandler: handlers.NewCustomerCardDeleteDELETEHandler(customerCardService),
 		CustomerCardUpdatePATCHHandler:  handlers.NewCustomerCardUpdatePATCHHandler(customerCardService),
+
+		EmployeeCreatePOSTHandler:   handlers.NewEmployeeCreatePOSTHandler(employeeService),
+		EmployeeRetrieveGETHandler:  handlers.NewEmployeeRetrieveGETHandler(employeeService),
+		EmployeesListGETHandler:     handlers.NewEmployeesListGETHandler(employeeService),
+		EmployeeDeleteDELETEHandler: handlers.NewEmployeeDeleteDELETEHandler(employeeService),
+		EmployeeUpdatePATCHHandler:  handlers.NewEmployeeUpdatePATCHHandler(employeeService),
 	}
 }
