@@ -10,7 +10,7 @@ import (
 	"github.com/velosypedno/zlagoda/internal/models"
 )
 
-func isSalaryValid(salary float64) bool {
+func isDecimalValid(salary float64) bool {
 	var salary_str string = strconv.FormatFloat(salary, 'f', -1, 64)
 
 	var parts []string = strings.Split(salary_str, ".")
@@ -36,7 +36,10 @@ func isEmployeeUpdateValid(empl models.EmployeeUpdate) bool {
 	if len(empl.Role) > 10 {
 		return false
 	}
-	if !isSalaryValid(empl.Salary) {
+	if empl.Salary < 0 {
+		return false
+	}
+	if !isDecimalValid(empl.Salary) {
 		return false
 	}
 
@@ -78,7 +81,7 @@ func NewEmployeeCreatePOSTHandler(service employeeCreator) gin.HandlerFunc {
 			Name        string  `json:"empl_name" binding:"required,max=50"`
 			Patronymic  string  `json:"empl_patronymic" binding:"max=50"`
 			Role        string  `json:"empl_role" binding:"required,max=10"`
-			Salary      float64 `json:"salary" binding:"required"`
+			Salary      float64 `json:"salary" binding:"required,gte=0"`
 			DateOfBirth string  `json:"date_of_birth" binding:"required"`
 			DateOfStart string  `json:"date_of_start" binding:"required"`
 			PhoneNumber string  `json:"phone_number" binding:"required,len=13,startswith=+380"`
@@ -112,7 +115,7 @@ func NewEmployeeCreatePOSTHandler(service employeeCreator) gin.HandlerFunc {
 			return
 		}
 
-		if !isSalaryValid(req.Salary) {
+		if !isDecimalValid(req.Salary) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid salary"})
 			return
 		}
@@ -141,12 +144,12 @@ func NewEmployeeCreatePOSTHandler(service employeeCreator) gin.HandlerFunc {
 	}
 }
 
-type EmployeeReader interface {
+type employeeReader interface {
 	GetEmployeeById(id string) (models.EmployeeRetrieve, error)
 	GetEmployees() ([]models.EmployeeRetrieve, error)
 }
 
-func NewEmployeeRetrieveGETHandler(service EmployeeReader) gin.HandlerFunc {
+func NewEmployeeRetrieveGETHandler(service employeeReader) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		type response struct {
 			ID          string  `json:"employee_id"`
@@ -193,7 +196,7 @@ func NewEmployeeRetrieveGETHandler(service EmployeeReader) gin.HandlerFunc {
 	}
 }
 
-func NewEmployeesListGETHandler(service EmployeeReader) gin.HandlerFunc {
+func NewEmployeesListGETHandler(service employeeReader) gin.HandlerFunc {
 	type responseItem struct {
 		ID          string  `json:"employee_id"`
 		Surname     string  `json:"empl_surname"`
@@ -238,11 +241,11 @@ func NewEmployeesListGETHandler(service EmployeeReader) gin.HandlerFunc {
 	}
 }
 
-type EmployeeRemover interface {
+type employeeRemover interface {
 	DeleteEmployee(id string) error
 }
 
-func NewEmployeeDeleteDELETEHandler(service EmployeeRemover) gin.HandlerFunc {
+func NewEmployeeDeleteDELETEHandler(service employeeRemover) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var id string = c.Param("id")
 		if len(id) != 10 {
@@ -260,12 +263,12 @@ func NewEmployeeDeleteDELETEHandler(service EmployeeRemover) gin.HandlerFunc {
 	}
 }
 
-type EmployeeUpdater interface {
+type employeeUpdater interface {
 	UpdateEmployee(id string, c models.EmployeeUpdate) error
 	GetEmployeeById(id string) (models.EmployeeRetrieve, error)
 }
 
-func NewEmployeeUpdatePATCHHandler(service EmployeeUpdater) gin.HandlerFunc {
+func NewEmployeeUpdatePATCHHandler(service employeeUpdater) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		if len(id) != 10 {

@@ -30,7 +30,7 @@ func isCustomerCardUpdateValid(card models.CustomerCardUpdate) bool {
 	if len(card.ZipCode) > 9 {
 		return false
 	}
-	if card.Percent < 0 || card.Percent > 100 {
+	if card.Percent < 0 {
 		return false
 	}
 	return true
@@ -50,7 +50,7 @@ func NewCustomerCardCreatePOSTHandler(service customerCardCreator) gin.HandlerFu
 			City        string `json:"city" binding:"max=50"`
 			Street      string `json:"street" binding:"max=50"`
 			ZipCode     string `json:"zip_code" binding:"max=9"`
-			Percent     int    `json:"percent" binding:"required,gte=0,lte=100"`
+			Percent     int    `json:"percent" binding:"required,gte=0"`
 		}
 		var req request
 		if err := c.ShouldBindJSON(&req); err != nil {

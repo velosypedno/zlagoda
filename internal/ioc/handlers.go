@@ -30,6 +30,12 @@ type HandlerContainer struct {
 	EmployeesListGETHandler     gin.HandlerFunc
 	EmployeeDeleteDELETEHandler gin.HandlerFunc
 	EmployeeUpdatePATCHHandler  gin.HandlerFunc
+
+	ReceiptCreatePOSTHandler   gin.HandlerFunc
+	ReceiptRetrieveGETHandler  gin.HandlerFunc
+	ReceiptsListGETHandler     gin.HandlerFunc
+	ReceiptDeleteDELETEHandler gin.HandlerFunc
+	ReceiptUpdatePATCHHandler  gin.HandlerFunc
 }
 
 func BuildHandlerContainer(c *config.Config) *HandlerContainer {
@@ -45,6 +51,9 @@ func BuildHandlerContainer(c *config.Config) *HandlerContainer {
 
 	employeeRepo := repos.NewEmployeeRepo(db)
 	employeeService := services.NewEmployeeService(employeeRepo)
+
+	receiptRepo := repos.NewReceiptRepo(db)
+	receiptService := services.NewReceiptService(receiptRepo)
 
 	return &HandlerContainer{
 		CategoryCreatePOSTHandler:   handlers.NewCategoryCreatePOSTHandler(categoryService),
@@ -64,5 +73,11 @@ func BuildHandlerContainer(c *config.Config) *HandlerContainer {
 		EmployeesListGETHandler:     handlers.NewEmployeesListGETHandler(employeeService),
 		EmployeeDeleteDELETEHandler: handlers.NewEmployeeDeleteDELETEHandler(employeeService),
 		EmployeeUpdatePATCHHandler:  handlers.NewEmployeeUpdatePATCHHandler(employeeService),
+
+		ReceiptCreatePOSTHandler:   handlers.NewReceiptCreatePOSTHandler(receiptService),
+		ReceiptRetrieveGETHandler:  handlers.NewReceiptRetrieveGETHandler(receiptService),
+		ReceiptsListGETHandler:     handlers.NewReceiptsListGETHandler(receiptService),
+		ReceiptDeleteDELETEHandler: handlers.NewReceiptDeleteDELETEHandler(receiptService),
+		ReceiptUpdatePATCHHandler:  handlers.NewReceiptUpdatePATCHHandler(receiptService),
 	}
 }

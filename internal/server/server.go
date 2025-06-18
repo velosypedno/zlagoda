@@ -38,6 +38,12 @@ func SetupRoutes(c *ioc.HandlerContainer) *gin.Engine {
 		api.GET("/employees/:id", c.EmployeeRetrieveGETHandler)
 		api.DELETE("/employees/:id", c.EmployeeDeleteDELETEHandler)
 		api.PATCH("/employees/:id", c.EmployeeUpdatePATCHHandler)
+
+		api.POST("/receipts", c.ReceiptCreatePOSTHandler)
+		api.GET("/receipts", c.ReceiptsListGETHandler)
+		api.GET("/receipts/:receipt_number", c.ReceiptRetrieveGETHandler)
+		api.DELETE("/receipts/:receipt_number", c.ReceiptDeleteDELETEHandler)
+		api.PATCH("/receipts/:receipt_number", c.ReceiptUpdatePATCHHandler)
 	}
 	return router
 }
