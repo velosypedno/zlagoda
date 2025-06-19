@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/velosypedno/zlagoda/internal/models"
 	"github.com/velosypedno/zlagoda/internal/utils"
+	"log"
 )
 
 type employeeCreator interface {
@@ -30,17 +31,20 @@ func NewEmployeeCreatePOSTHandler(service employeeCreator) gin.HandlerFunc {
 		}
 		var req request
 		if err := c.ShouldBindJSON(&req); err != nil {
+			log.Printf("[EmployeeCreatePOST] BindJSON error: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
 			return
 		}
 
 		birthDate, err := time.Parse("2006-01-02", *req.DateOfBirth)
 		if err != nil {
+			log.Printf("[EmployeeCreatePOST] Invalid date_of_birth: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid date of birth format"})
 			return
 		}
 		startDate, err := time.Parse("2006-01-02", *req.DateOfStart)
 		if err != nil {
+			log.Printf("[EmployeeCreatePOST] Invalid date_of_start: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid date of start format"})
 			return
 		}
@@ -50,11 +54,13 @@ func NewEmployeeCreatePOSTHandler(service employeeCreator) gin.HandlerFunc {
 		// 	return false
 		// }
 		if eighteenYearsOld.After(now) || eighteenYearsOld.After(startDate) {
+			log.Printf("[EmployeeCreatePOST] Invalid dates: birthDate=%v, startDate=%v", birthDate, startDate)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid dates"})
 			return
 		}
 
 		if !utils.IsSalaryValid(*req.Salary) {
+			log.Printf("[EmployeeCreatePOST] Invalid salary: %v", *req.Salary)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid salary"})
 			return
 		}
@@ -75,6 +81,7 @@ func NewEmployeeCreatePOSTHandler(service employeeCreator) gin.HandlerFunc {
 
 		id, err := service.CreateEmployee(model)
 		if err != nil {
+			log.Printf("[EmployeeCreatePOST] Service error: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create employee: " + err.Error()})
 			return
 		}
