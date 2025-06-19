@@ -5,14 +5,16 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/velosypedno/zlagoda/internal/config"
 	"github.com/velosypedno/zlagoda/internal/models"
+	"github.com/velosypedno/zlagoda/internal/utils"
 )
 
 type receiptCreator interface {
 	CreateReceipt(c models.ReceiptCreate) (string, error)
 }
 
-func NewReceiptCreatePOSTHandler(service receiptCreator) gin.HandlerFunc {
+func NewReceiptCreatePOSTHandler(service receiptCreator, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		type request struct {
 			EmployeeId *string  `json:"employee_id" binding:"omitempty,required,len=10"`
@@ -35,11 +37,11 @@ func NewReceiptCreatePOSTHandler(service receiptCreator) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid print date"})
 			return
 		}
-		if !isDecimalValid(*req.TotalSum) {
+		if !utils.IsAmountValid(*req.TotalSum) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid total sum"})
 			return
 		}
-		var VAT float64 = 0.2 * *req.TotalSum
+		var VAT float64 = cfg.VAT_RATE * *req.TotalSum
 
 		model := models.ReceiptCreate{
 			EmployeeId: req.EmployeeId,
@@ -51,7 +53,7 @@ func NewReceiptCreatePOSTHandler(service receiptCreator) gin.HandlerFunc {
 
 		id, err := service.CreateReceipt(model)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create employee: " + err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create receipt: " + err.Error()})
 			return
 		}
 
@@ -113,7 +115,7 @@ func NewReceiptsListGETHandler(service receiptReader) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		receipts, err := service.GetReceipts()
 		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Failed to retrieve receipts: " + err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve receipts: " + err.Error()})
 			return
 		}
 
@@ -161,7 +163,7 @@ type receiptUpdater interface {
 	GetReceiptByReceiptNumber(receiptNumber string) (models.ReceiptRetrieve, error)
 }
 
-func NewReceiptUpdatePATCHHandler(service receiptUpdater) gin.HandlerFunc {
+func NewReceiptUpdatePATCHHandler(service receiptUpdater, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		receiptNumber := c.Param("receipt_number")
 		if len(receiptNumber) != 10 {
@@ -183,7 +185,8 @@ func NewReceiptUpdatePATCHHandler(service receiptUpdater) gin.HandlerFunc {
 
 		receiptCurrentState, err := service.GetReceiptByReceiptNumber(receiptNumber)
 		if err != nil {
-			receiptCurrentState = models.ReceiptRetrieve{}
+			c.JSON(http.StatusNotFound, gin.H{"error": "Receipt not found: " + err.Error()})
+			return
 		}
 		currentPrintDateStr := receiptCurrentState.PrintDate.Format("2006-01-02")
 		if req.EmployeeId == nil {
@@ -208,11 +211,11 @@ func NewReceiptUpdatePATCHHandler(service receiptUpdater) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid print date"})
 			return
 		}
-		if !isDecimalValid(*req.TotalSum) {
+		if !utils.IsAmountValid(*req.TotalSum) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid total sum"})
 			return
 		}
-		var VAT float64 = 0.2 * *req.TotalSum
+		var VAT float64 = cfg.VAT_RATE * *req.TotalSum
 
 		model := models.ReceiptUpdate{
 			EmployeeId: req.EmployeeId,

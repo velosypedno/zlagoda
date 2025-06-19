@@ -2,50 +2,34 @@ package repos
 
 import (
 	"database/sql"
-
-	"math/rand"
-	"slices"
+	"fmt"
 
 	"github.com/velosypedno/zlagoda/internal/models"
+	"github.com/velosypedno/zlagoda/internal/utils"
 )
 
-func generateId(length int) string {
-	var symbols = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
-
-	b := make([]rune, length)
-	for i := range b {
-		b[i] = symbols[rand.Intn(len(symbols))]
-	}
-	return string(b)
-}
-
 func getNewCardNumber(r *CustomerCardRepo) (string, error) {
-	query := `SELECT card_number FROM customer_card`
+	const maxRetries = 10
 
-	rows, err := r.db.Query(query)
-	if err != nil {
-		return "", err
-	}
-	defer rows.Close()
-
-	var cardNumbers []string
-	for rows.Next() {
-		var currCardNumber string
-		err := rows.Scan(&currCardNumber)
+	for i := 0; i < maxRetries; i++ {
+		cardNumber, err := utils.GenerateSecureID(13)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("failed to generate card number: %w", err)
 		}
-		cardNumbers = append(cardNumbers, currCardNumber)
+
+		// Check if card number already exists
+		var exists bool
+		err = r.db.QueryRow("SELECT EXISTS(SELECT 1 FROM customer_card WHERE card_number = $1)", cardNumber).Scan(&exists)
+		if err != nil {
+			return "", fmt.Errorf("failed to check card number uniqueness: %w", err)
+		}
+
+		if !exists {
+			return cardNumber, nil
+		}
 	}
 
-	var newCardNumber string
-	for {
-		newCardNumber = generateId(13)
-		if !slices.Contains(cardNumbers, newCardNumber) {
-			break
-		}
-	}
-	return newCardNumber, err
+	return "", fmt.Errorf("failed to generate unique card number after %d attempts", maxRetries)
 }
 
 type CustomerCardRepo struct {
@@ -106,7 +90,7 @@ func (r *CustomerCardRepo) RetrieveCustomerCardByCardNumber(cardNumber string) (
 			street,
 			zip_code,
 			percent
-		FROM customer_card 
+		FROM customer_card
 		WHERE card_number = $1
 	`
 	var customerCard models.CustomerCardRetrieve
@@ -140,7 +124,7 @@ func (r *CustomerCardRepo) RetrieveCustomerCards() ([]models.CustomerCardRetriev
 			street,
 			zip_code,
 			percent
-		FROM customer_card 
+		FROM customer_card
 	`
 	rows, err := r.db.Query(query)
 	if err != nil {
@@ -179,8 +163,8 @@ func (r *CustomerCardRepo) DeleteCustomerCard(cardNumber string) error {
 
 func (r *CustomerCardRepo) UpdateCustomerCard(cardNumber string, c models.CustomerCardUpdate) error {
 	query := `
-		UPDATE customer_card 
-		SET 
+		UPDATE customer_card
+		SET
 			cust_surname = $2,
 			cust_name = $3,
 			cust_patronymic = $4,

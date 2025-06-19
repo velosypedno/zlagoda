@@ -44,6 +44,38 @@ func SetupRoutes(c *ioc.HandlerContainer) *gin.Engine {
 		api.GET("/receipts/:receipt_number", c.ReceiptRetrieveGETHandler)
 		api.DELETE("/receipts/:receipt_number", c.ReceiptDeleteDELETEHandler)
 		api.PATCH("/receipts/:receipt_number", c.ReceiptUpdatePATCHHandler)
+
+		api.POST("/products", c.ProductCreatePOSTHandler)
+		api.GET("/products", c.ProductsListGETHandler)
+		api.GET("/products/:id", c.ProductRetrieveGETHandler)
+		api.DELETE("/products/:id", c.ProductDeleteDELETEHandler)
+		api.PATCH("/products/:id", c.ProductUpdatePATCHHandler)
+
+		api.POST("/store-products", c.StoreProductCreatePOSTHandler)
+		api.GET("/store-products", c.StoreProductsListGETHandler)
+		api.GET("/store-products/details", c.StoreProductsWithDetailsListGETHandler)
+		api.GET("/store-products/promotional", c.PromotionalProductsGETHandler)
+		api.GET("/store-products/by-product/:product_id", c.StoreProductsByProductIDGETHandler)
+		api.GET("/store-products/:upc", c.StoreProductRetrieveGETHandler)
+		api.DELETE("/store-products/:upc", c.StoreProductDeleteDELETEHandler)
+		api.PATCH("/store-products/:upc", c.StoreProductUpdatePATCHHandler)
+		api.PATCH("/store-products/:upc/quantity", c.StoreProductQuantityUpdatePATCHHandler)
+		api.GET("/store-products/:upc/stock-check", c.StoreProductStockCheckGETHandler)
+
+		api.POST("/sales", c.SaleCreatePOSTHandler)
+		api.GET("/sales", c.SalesListGETHandler)
+		api.GET("/sales/details", c.SalesWithDetailsListGETHandler)
+		api.GET("/sales/top-products", c.TopSellingProductsGETHandler)
+		api.GET("/sales/by-receipt/:receipt_number", c.SalesByReceiptGETHandler)
+		api.GET("/sales/by-receipt/:receipt_number/details", c.SalesWithDetailsByReceiptGETHandler)
+		api.DELETE("/sales/by-receipt/:receipt_number", c.SalesByReceiptDeleteDELETEHandler)
+		api.GET("/sales/by-upc/:upc", c.SalesByUPCGETHandler)
+		api.GET("/sales/stats/product/:product_id", c.SalesStatsByProductGETHandler)
+		api.GET("/sales/:upc/:receipt_number", c.SaleRetrieveGETHandler)
+		api.DELETE("/sales/:upc/:receipt_number", c.SaleDeleteDELETEHandler)
+		api.PATCH("/sales/:upc/:receipt_number", c.SaleUpdatePATCHHandler)
+
+		api.GET("/receipts/:receipt_number/total", c.ReceiptTotalGETHandler)
 	}
 	return router
 }

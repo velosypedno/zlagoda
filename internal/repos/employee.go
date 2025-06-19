@@ -2,39 +2,34 @@ package repos
 
 import (
 	"database/sql"
-
-	"slices"
+	"fmt"
 
 	"github.com/velosypedno/zlagoda/internal/models"
+	"github.com/velosypedno/zlagoda/internal/utils"
 )
 
 func getNewEmployeeId(r *EmployeeRepo) (string, error) {
-	query := `SELECT employee_id FROM employee`
+	const maxRetries = 10
 
-	rows, err := r.db.Query(query)
-	if err != nil {
-		return "", err
-	}
-	defer rows.Close()
-
-	var ids []string
-	for rows.Next() {
-		var id string
-		err := rows.Scan(&id)
+	for i := 0; i < maxRetries; i++ {
+		employeeId, err := utils.GenerateSecureID(10)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("failed to generate employee ID: %w", err)
 		}
-		ids = append(ids, id)
+
+		// Check if employee ID already exists
+		var exists bool
+		err = r.db.QueryRow("SELECT EXISTS(SELECT 1 FROM employee WHERE employee_id = $1)", employeeId).Scan(&exists)
+		if err != nil {
+			return "", fmt.Errorf("failed to check employee ID uniqueness: %w", err)
+		}
+
+		if !exists {
+			return employeeId, nil
+		}
 	}
 
-	var newId string
-	for {
-		newId = generateId(10)
-		if !slices.Contains(ids, newId) {
-			break
-		}
-	}
-	return newId, err
+	return "", fmt.Errorf("failed to generate unique employee ID after %d attempts", maxRetries)
 }
 
 type EmployeeRepo struct {
@@ -104,7 +99,7 @@ func (r *EmployeeRepo) RetrieveEmployeeById(id string) (models.EmployeeRetrieve,
 			city,
 			street,
 			zip_code
-		FROM employee 
+		FROM employee
 		WHERE employee_id = $1
 	`
 	var employee models.EmployeeRetrieve
@@ -144,7 +139,7 @@ func (r *EmployeeRepo) RetrieveEmployees() ([]models.EmployeeRetrieve, error) {
 			city,
 			street,
 			zip_code
-		FROM employee 
+		FROM employee
 	`
 	rows, err := r.db.Query(query)
 	if err != nil {
@@ -186,8 +181,8 @@ func (r *EmployeeRepo) DeleteEmployee(id string) error {
 
 func (r *EmployeeRepo) UpdateEmployee(id string, c models.EmployeeUpdate) error {
 	query := `
-		UPDATE employee 
-		SET 
+		UPDATE employee
+		SET
 			empl_surname = $2,
 			empl_name = $3,
 			empl_patronymic = $4,

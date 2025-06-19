@@ -2,26 +2,12 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/velosypedno/zlagoda/internal/models"
+	"github.com/velosypedno/zlagoda/internal/utils"
 )
-
-func isDecimalValid(salary float64) bool {
-	var salary_str string = strconv.FormatFloat(salary, 'f', -1, 64)
-
-	var parts []string = strings.Split(salary_str, ".")
-	var before int = len(parts[0])
-	var after int = 0
-	if len(parts) > 1 {
-		after = len(parts[1])
-	}
-
-	return before <= 13 && after <= 4
-}
 
 type employeeCreator interface {
 	CreateEmployee(c models.EmployeeCreate) (string, error)
@@ -68,7 +54,7 @@ func NewEmployeeCreatePOSTHandler(service employeeCreator) gin.HandlerFunc {
 			return
 		}
 
-		if !isDecimalValid(*req.Salary) {
+		if !utils.IsSalaryValid(*req.Salary) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid salary"})
 			return
 		}
@@ -254,7 +240,8 @@ func NewEmployeeUpdatePATCHHandler(service employeeUpdater) gin.HandlerFunc {
 
 		employeeCurrentState, err := service.GetEmployeeById(id)
 		if err != nil {
-			employeeCurrentState = models.EmployeeRetrieve{}
+			c.JSON(http.StatusNotFound, gin.H{"error": "Employee not found: " + err.Error()})
+			return
 		}
 		currentBirthDateStr := employeeCurrentState.DateOfBirth.Format("2006-01-02")
 		currentStartDateStr := employeeCurrentState.DateOfStart.Format("2006-01-02")
@@ -312,7 +299,7 @@ func NewEmployeeUpdatePATCHHandler(service employeeUpdater) gin.HandlerFunc {
 			return
 		}
 
-		if !isDecimalValid(*req.Salary) {
+		if !utils.IsSalaryValid(*req.Salary) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid salary"})
 			return
 		}

@@ -188,7 +188,8 @@ func NewCustomerCardUpdatePATCHHandler(service customerCardUpdater) gin.HandlerF
 
 		custCardCurrentState, err := service.GetCustomerCardByCardNumber(cardNumber)
 		if err != nil {
-			custCardCurrentState = models.CustomerCardRetrieve{}
+			c.JSON(http.StatusNotFound, gin.H{"error": "Customer card not found: " + err.Error()})
+			return
 		}
 		if req.Surname == nil {
 			req.Surname = custCardCurrentState.Surname

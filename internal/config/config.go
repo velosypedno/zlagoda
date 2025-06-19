@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -12,11 +13,19 @@ type Config struct {
 	DB_DRIVER string
 	DB_DSN    string
 	PORT      string
+	VAT_RATE  float64
 }
 
 func Load() *Config {
 	if err := godotenv.Load(); err != nil {
 		log.Println(err)
+	}
+
+	vatRate := 0.2 // default 20%
+	if envVat := os.Getenv("VAT_RATE"); envVat != "" {
+		if rate, err := strconv.ParseFloat(envVat, 64); err == nil && rate >= 0 && rate <= 1 {
+			vatRate = rate
+		}
 	}
 
 	return &Config{
@@ -30,5 +39,6 @@ func Load() *Config {
 		),
 		DB_DRIVER: os.Getenv("DB_DRIVER"),
 		PORT:      os.Getenv("PORT"),
+		VAT_RATE:  vatRate,
 	}
 }

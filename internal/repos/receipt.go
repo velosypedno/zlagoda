@@ -2,39 +2,34 @@ package repos
 
 import (
 	"database/sql"
-
-	"slices"
+	"fmt"
 
 	"github.com/velosypedno/zlagoda/internal/models"
+	"github.com/velosypedno/zlagoda/internal/utils"
 )
 
 func getNewReceiptNumber(r *ReceiptRepo) (string, error) {
-	query := `SELECT receipt_number FROM receipt`
+	const maxRetries = 10
 
-	rows, err := r.db.Query(query)
-	if err != nil {
-		return "", err
-	}
-	defer rows.Close()
-
-	var receiptNumbers []string
-	for rows.Next() {
-		var receiptNumber string
-		err := rows.Scan(&receiptNumber)
+	for i := 0; i < maxRetries; i++ {
+		receiptNumber, err := utils.GenerateSecureID(10)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("failed to generate receipt number: %w", err)
 		}
-		receiptNumbers = append(receiptNumbers, receiptNumber)
+
+		// Check if receipt number already exists
+		var exists bool
+		err = r.db.QueryRow("SELECT EXISTS(SELECT 1 FROM receipt WHERE receipt_number = $1)", receiptNumber).Scan(&exists)
+		if err != nil {
+			return "", fmt.Errorf("failed to check receipt number uniqueness: %w", err)
+		}
+
+		if !exists {
+			return receiptNumber, nil
+		}
 	}
 
-	var newReceiptNumber string
-	for {
-		newReceiptNumber = generateId(10)
-		if !slices.Contains(receiptNumbers, newReceiptNumber) {
-			break
-		}
-	}
-	return newReceiptNumber, err
+	return "", fmt.Errorf("failed to generate unique receipt number after %d attempts", maxRetries)
 }
 
 type ReceiptRepo struct {
@@ -86,7 +81,7 @@ func (r *ReceiptRepo) RetrieveReceiptByReceiptNumber(receiptNumber string) (mode
 			print_date,
 			sum_total,
 			vat
-		FROM receipt 
+		FROM receipt
 		WHERE receipt_number = $1
 	`
 	var receipt models.ReceiptRetrieve
@@ -114,7 +109,7 @@ func (r *ReceiptRepo) RetrieveReceipts() ([]models.ReceiptRetrieve, error) {
 			print_date,
 			sum_total,
 			vat
-		FROM receipt 
+		FROM receipt
 	`
 	rows, err := r.db.Query(query)
 	if err != nil {
@@ -150,8 +145,8 @@ func (r *ReceiptRepo) DeleteReceipt(receiptNumber string) error {
 
 func (r *ReceiptRepo) UpdateReceipt(receiptNumber string, c models.ReceiptUpdate) error {
 	query := `
-		UPDATE receipt 
-		SET 
+		UPDATE receipt
+		SET
 			employee_id = $2,
 			card_number = $3,
 			print_date = $4,
