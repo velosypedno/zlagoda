@@ -18,6 +18,7 @@ const CustomerCards = () => {
     zip_code: '',
     percent: 0
   });
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     loadCustomerCards();
@@ -91,6 +92,14 @@ const CustomerCards = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Customer Cards</h1>
+        <input
+          type="text"
+          placeholder="Search by name or surname..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="border rounded px-3 py-1 ml-4"
+          style={{ minWidth: 220 }}
+        />
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded"
           onClick={() => setIsCreating(true)}
@@ -135,14 +144,23 @@ const CustomerCards = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {customerCards.map((card) => (
-            <CustomerCardComponent
-              key={card.card_number}
-              customerCard={card}
-              onDelete={() => handleDelete(card.card_number)}
-              onUpdate={(updates: Partial<CustomerCard>) => handleUpdate(card.card_number, updates)}
-            />
-          ))}
+          {customerCards
+            .filter(card => {
+              const q = search.trim().toLowerCase();
+              return (
+                !q ||
+                card.cust_surname.toLowerCase().includes(q) ||
+                card.cust_name.toLowerCase().includes(q)
+              );
+            })
+            .map((card) => (
+              <CustomerCardComponent
+                key={card.card_number}
+                customerCard={card}
+                onDelete={() => handleDelete(card.card_number)}
+                onUpdate={(updates: Partial<CustomerCard>) => handleUpdate(card.card_number, updates)}
+              />
+            ))}
         </div>
       )}
     </div>

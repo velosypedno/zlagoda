@@ -19,6 +19,7 @@ const EmployeesPage = () => {
     street: "",
     zip_code: "",
   });
+  const [search, setSearch] = useState("");
 
   const loadEmployees = async () => {
     try {
@@ -95,6 +96,13 @@ const EmployeesPage = () => {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Employees</h1>
+      <input
+        type="text"
+        placeholder="Search by name or surname..."
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        className="border rounded px-3 py-2 mb-6 w-full max-w-xs"
+      />
       {error && <div className="mb-4 text-red-500">{error}</div>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         <input name="empl_surname" value={newEmployee.empl_surname} onChange={handleNewChange} placeholder="Surname" className="border rounded px-3 py-2" />
@@ -115,14 +123,23 @@ const EmployeesPage = () => {
       </div>
       <button onClick={handleCreate} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 mb-8">Add Employee</button>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {Array.isArray(employees) && employees.map((employee) => (
-          <EmployeeCard
-            key={employee.employee_id}
-            employee={employee}
-            onDelete={() => handleDelete(employee.employee_id)}
-            onUpdate={(data) => handleUpdate(employee.employee_id, data)}
-          />
-        ))}
+        {Array.isArray(employees) && employees
+          .filter(employee => {
+            const q = search.trim().toLowerCase();
+            return (
+              !q ||
+              employee.empl_surname.toLowerCase().includes(q) ||
+              employee.empl_name.toLowerCase().includes(q)
+            );
+          })
+          .map((employee) => (
+            <EmployeeCard
+              key={employee.employee_id}
+              employee={employee}
+              onDelete={() => handleDelete(employee.employee_id)}
+              onUpdate={(data) => handleUpdate(employee.employee_id, data)}
+            />
+          ))}
       </div>
     </div>
   );
