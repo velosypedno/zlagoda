@@ -35,6 +35,7 @@ const StoreProducts = () => {
   // Filtering and search state
   const [selectedCategory, setSelectedCategory] = useState<number>(0);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [showPromotionalOnly, setShowPromotionalOnly] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<"product_name" | "upc" | "selling_price" | "products_number">("product_name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
@@ -44,7 +45,7 @@ const StoreProducts = () => {
 
   useEffect(() => {
     loadFilteredStoreProducts();
-  }, [selectedCategory, searchTerm]);
+  }, [selectedCategory, searchTerm, showPromotionalOnly]);
 
   const loadData = async () => {
     try {
@@ -79,7 +80,12 @@ const StoreProducts = () => {
         storeProductsData = await fetchStoreProductsWithDetails();
       }
       
-      setStoreProducts(storeProductsData.data || []);
+      let filteredProducts = storeProductsData.data || [];
+      if (showPromotionalOnly) {
+        filteredProducts = filteredProducts.filter(p => p.promotional_product);
+      }
+      
+      setStoreProducts(filteredProducts);
       setError(null);
     } catch (err) {
       setError("Failed to load filtered store products");
@@ -145,8 +151,17 @@ const StoreProducts = () => {
   const clearFilters = () => {
     setSelectedCategory(0);
     setSearchTerm("");
+    setShowPromotionalOnly(false);
     setSortBy("product_name");
     setSortOrder("asc");
+  };
+
+  const handlePromotionalCheckboxChange = (checked: boolean) => {
+    const newFormData = { ...formData, promotional_product: checked };
+    if (!checked) {
+      newFormData.upc_prom = "";
+    }
+    setFormData(newFormData);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -271,7 +286,7 @@ const StoreProducts = () => {
 
       {/* Filtering, Search, and Sorting Controls */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
           {/* Category Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -334,6 +349,21 @@ const StoreProducts = () => {
               {sortOrder === "asc" ? "↑ Ascending" : "↓ Descending"}
             </button>
           </div>
+
+          {/* Promotional Filter */}
+          <div className="flex items-end justify-center h-full">
+            <label className="flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showPromotionalOnly}
+                onChange={(e) => setShowPromotionalOnly(e.target.checked)}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <span className="ml-2 text-sm font-medium text-gray-700">
+                Promotional Only
+              </span>
+            </label>
+          </div>
         </div>
 
         {/* Clear Filters Button */}
@@ -372,18 +402,6 @@ const StoreProducts = () => {
                 />
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Promotional UPC (12 characters)
-                </label>
-                <input
-                  type="text"
-                  value={formData.upc_prom}
-                  onChange={(e) => setFormData({ ...formData, upc_prom: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  maxLength={12}
-                />
-              </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -442,7 +460,7 @@ const StoreProducts = () => {
                   <input
                     type="checkbox"
                     checked={formData.promotional_product}
-                    onChange={(e) => setFormData({ ...formData, promotional_product: e.target.checked })}
+                    onChange={(e) => handlePromotionalCheckboxChange(e.target.checked)}
                     className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <span className="text-sm font-medium text-gray-700">
@@ -471,9 +489,9 @@ const StoreProducts = () => {
         </div>
       )}
 
-      {storeProducts.length === 0 ? (
+      {getSortedStoreProducts().length === 0 ? (
         <div className="text-center text-gray-500 py-8">
-          No store products found. Create your first store product!
+          No store products found.
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

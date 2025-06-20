@@ -17,6 +17,8 @@ const StoreProductCard = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingQuantity, setIsUpdatingQuantity] = useState(false);
   const [quantityChange, setQuantityChange] = useState(0);
+  
+  const discountedPrice = storeProduct.selling_price * 0.8;
 
   const handleDelete = async () => {
     if (window.confirm("Are you sure you want to delete this store product?")) {
@@ -42,7 +44,14 @@ const StoreProductCard = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+    <div className="relative bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+      {storeProduct.promotional_product && (
+        <div className="absolute top-0 right-0 -mt-2 -mr-2">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-orange-500 text-white">
+            Sale
+          </span>
+        </div>
+      )}
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
           <h3 className="text-xl font-semibold text-gray-800 truncate">
@@ -75,7 +84,18 @@ const StoreProductCard = ({
         
         <div>
           <span className="text-sm font-medium text-gray-600">Price:</span>
-          <p className="text-gray-800 mt-1">${storeProduct.selling_price.toFixed(2)}</p>
+          {storeProduct.promotional_product ? (
+            <div className="mt-1">
+              <span className="text-gray-500 line-through mr-2">
+                ${storeProduct.selling_price.toFixed(2)}
+              </span>
+              <span className="text-red-600 font-bold text-lg">
+                ${discountedPrice.toFixed(2)}
+              </span>
+            </div>
+          ) : (
+            <p className="text-gray-800 mt-1">${storeProduct.selling_price.toFixed(2)}</p>
+          )}
         </div>
         
         <div>
