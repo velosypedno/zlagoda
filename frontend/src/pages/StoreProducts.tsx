@@ -35,6 +35,7 @@ const StoreProducts = () => {
   // Filtering and search state
   const [selectedCategory, setSelectedCategory] = useState<number>(0);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [upcSearch, setUpcSearch] = useState<string>("");
   const [showPromotionalOnly, setShowPromotionalOnly] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<"product_name" | "upc" | "selling_price" | "products_number">("product_name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -306,7 +307,7 @@ const StoreProducts = () => {
             </select>
           </div>
 
-          {/* Search */}
+          {/* Search by Product Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Search by Product Name
@@ -316,6 +317,20 @@ const StoreProducts = () => {
               value={searchTerm}
               onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Enter product name..."
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Search by UPC */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Search by UPC
+            </label>
+            <input
+              type="text"
+              value={upcSearch}
+              onChange={e => setUpcSearch(e.target.value)}
+              placeholder="Enter UPC..."
               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -495,16 +510,21 @@ const StoreProducts = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {getSortedStoreProducts().map((storeProduct) => (
-            <StoreProductCard
-              key={storeProduct.upc}
-              storeProduct={storeProduct}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onUpdateQuantity={handleUpdateQuantity}
-              onDeliveryUpdate={loadData}
-            />
-          ))}
+          {getSortedStoreProducts()
+            .filter(product => {
+              const upcQ = upcSearch.trim().toLowerCase();
+              return !upcQ || product.upc.toLowerCase().includes(upcQ);
+            })
+            .map((storeProduct) => (
+              <StoreProductCard
+                key={storeProduct.upc}
+                storeProduct={storeProduct}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onUpdateQuantity={handleUpdateQuantity}
+                onDeliveryUpdate={loadData}
+              />
+            ))}
         </div>
       )}
     </div>
