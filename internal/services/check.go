@@ -16,6 +16,7 @@ type CheckRepo interface {
 	CreateSaleTx(tx *sql.Tx, s models.SaleCreate) error
 	UpdateProductQuantityTx(tx *sql.Tx, upc string, quantityChange int) error
 	GetStoreProductStockTx(tx *sql.Tx, upc string) (int, error)
+	RetrieveChecks() ([]models.ReceiptRetrieve, error)
 }
 
 type CheckServiceImpl struct {
@@ -101,4 +102,8 @@ func (s *CheckServiceImpl) CreateCheck(req models.CheckCreate, vatRate float64) 
 		TotalSum:      totalSum,
 		VAT:           vat,
 	}, nil
+}
+
+func (s *CheckServiceImpl) GetChecks() ([]models.ReceiptRetrieve, error) {
+	return s.repo.RetrieveChecks()
 } 

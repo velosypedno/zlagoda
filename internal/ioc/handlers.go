@@ -76,6 +76,8 @@ type HandlerContainer struct {
 	SalesStatsByProductGETHandler       gin.HandlerFunc
 	TopSellingProductsGETHandler        gin.HandlerFunc
 	CheckCreatePOSTHandler gin.HandlerFunc
+	ChecksListGETHandler gin.HandlerFunc
+	CheckRetrieveGETHandler gin.HandlerFunc
 }
 
 // Close properly closes the database connection
@@ -192,5 +194,7 @@ func BuildHandlerContainer(c *config.Config) (*HandlerContainer, error) {
 		SalesStatsByProductGETHandler:       handlers.NewSalesStatsByProductGETHandler(saleService),
 		TopSellingProductsGETHandler:        handlers.NewTopSellingProductsGETHandler(saleService),
 		CheckCreatePOSTHandler: handlers.NewCheckCreatePOSTHandler(checkService, c),
+		ChecksListGETHandler: handlers.NewChecksListGETHandler(checkService),
+		CheckRetrieveGETHandler: handlers.NewCheckRetrieveGETHandler(checkService),
 	}, nil
 }

@@ -6,6 +6,8 @@ import CustomerCardsPage from "./pages/CustomerCards";
 import ProductsPage from "./pages/Products";
 import StoreProductsPage from "./pages/StoreProducts";
 import CreateCheck from "./pages/CreateCheck";
+import Checks from "./pages/Checks";
+import CheckDetails from "./pages/CheckDetails";
 import Navbar from "./components/Navbar";
 
 function App() {
@@ -21,6 +23,8 @@ function App() {
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/store-products" element={<StoreProductsPage />} />
           <Route path="/create-check" element={<CreateCheck />} />
+          <Route path="/checks" element={<Checks />} />
+          <Route path="/checks/:receipt_number" element={<CheckDetails />} />
         </Routes>
       </div>
     </BrowserRouter>

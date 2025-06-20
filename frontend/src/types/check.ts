@@ -16,4 +16,13 @@ export interface CheckCreateResponse {
   print_date: string;
   total_sum: number;
   vat: number;
+}
+
+export interface Check {
+  receipt_number: string;
+  employee_id: string;
+  card_number?: string | null;
+  print_date: string;
+  sum_total: number;
+  vat: number;
 } 

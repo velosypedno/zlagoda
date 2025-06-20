@@ -83,6 +83,8 @@ func SetupRoutes(c *ioc.HandlerContainer) *gin.Engine {
 		api.GET("/receipts/:receipt_number/total", c.ReceiptTotalGETHandler)
 
 		api.POST("/checks", c.CheckCreatePOSTHandler)
+		api.GET("/checks", c.ChecksListGETHandler)
+		api.GET("/checks/:receipt_number", c.CheckRetrieveGETHandler)
 	}
 	return router
 }

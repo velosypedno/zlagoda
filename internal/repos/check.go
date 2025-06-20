@@ -76,4 +76,42 @@ func (r *CheckRepoImpl) GetStoreProductStockTx(tx *sql.Tx, upc string) (int, err
 	var stock int
 	err := tx.QueryRow(query, upc).Scan(&stock)
 	return stock, err
+}
+
+func (r *CheckRepoImpl) RetrieveChecks() ([]models.ReceiptRetrieve, error) {
+	query := `
+		SELECT
+			receipt_number,
+			employee_id,
+			card_number,
+			print_date,
+			sum_total,
+			vat
+		FROM receipt
+		ORDER BY print_date DESC, receipt_number DESC
+	`
+	rows, err := r.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var checks []models.ReceiptRetrieve
+	for rows.Next() {
+		var check models.ReceiptRetrieve
+		err := rows.Scan(
+			&check.ReceiptNumber,
+			&check.EmployeeId,
+			&check.CardNumber,
+			&check.PrintDate,
+			&check.TotalSum,
+			&check.VAT,
+		)
+		if err != nil {
+			return nil, err
+		}
+		checks = append(checks, check)
+	}
+
+	return checks, nil
 } 
