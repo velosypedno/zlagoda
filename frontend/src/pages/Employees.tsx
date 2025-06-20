@@ -20,6 +20,9 @@ const EmployeesPage = () => {
     zip_code: "",
   });
   const [search, setSearch] = useState("");
+  const [sortField, setSortField] = useState<'empl_surname' | 'empl_name'>("empl_surname");
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>("asc");
+  const [roleFilter, setRoleFilter] = useState<'all' | 'manager' | 'cashier'>("all");
 
   const loadEmployees = async () => {
     try {
@@ -96,13 +99,28 @@ const EmployeesPage = () => {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Employees</h1>
-      <input
-        type="text"
-        placeholder="Search by name or surname..."
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-        className="border rounded px-3 py-2 mb-6 w-full max-w-xs"
-      />
+      <div className="flex flex-wrap gap-2 mb-6 items-center">
+        <input
+          type="text"
+          placeholder="Search by name or surname..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="border rounded px-3 py-2 w-full max-w-xs"
+        />
+        <select value={roleFilter} onChange={e => setRoleFilter(e.target.value as 'all' | 'manager' | 'cashier')} className="border rounded px-2 py-2">
+          <option value="all">All Roles</option>
+          <option value="manager">Manager</option>
+          <option value="cashier">Cashier</option>
+        </select>
+        <select value={sortField} onChange={e => setSortField(e.target.value as 'empl_surname' | 'empl_name')} className="border rounded px-2 py-2">
+          <option value="empl_surname">Sort by Surname</option>
+          <option value="empl_name">Sort by Name</option>
+        </select>
+        <select value={sortOrder} onChange={e => setSortOrder(e.target.value as 'asc' | 'desc')} className="border rounded px-2 py-2">
+          <option value="asc">Asc</option>
+          <option value="desc">Desc</option>
+        </select>
+      </div>
       {error && <div className="mb-4 text-red-500">{error}</div>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         <input name="empl_surname" value={newEmployee.empl_surname} onChange={handleNewChange} placeholder="Surname" className="border rounded px-3 py-2" />
@@ -126,11 +144,20 @@ const EmployeesPage = () => {
         {Array.isArray(employees) && employees
           .filter(employee => {
             const q = search.trim().toLowerCase();
+            const roleOk = roleFilter === 'all' || employee.empl_role === roleFilter;
             return (
-              !q ||
-              employee.empl_surname.toLowerCase().includes(q) ||
-              employee.empl_name.toLowerCase().includes(q)
+              roleOk &&
+              (!q ||
+                employee.empl_surname.toLowerCase().includes(q) ||
+                employee.empl_name.toLowerCase().includes(q))
             );
+          })
+          .sort((a, b) => {
+            const fieldA = a[sortField].toLowerCase();
+            const fieldB = b[sortField].toLowerCase();
+            if (fieldA < fieldB) return sortOrder === 'asc' ? -1 : 1;
+            if (fieldA > fieldB) return sortOrder === 'asc' ? 1 : -1;
+            return 0;
           })
           .map((employee) => (
             <EmployeeCard

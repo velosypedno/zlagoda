@@ -19,6 +19,8 @@ const CustomerCards = () => {
     percent: 0
   });
   const [search, setSearch] = useState("");
+  const [sortField, setSortField] = useState<'cust_surname' | 'cust_name'>("cust_surname");
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>("asc");
 
   useEffect(() => {
     loadCustomerCards();
@@ -92,14 +94,24 @@ const CustomerCards = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Customer Cards</h1>
-        <input
-          type="text"
-          placeholder="Search by name or surname..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="border rounded px-3 py-1 ml-4"
-          style={{ minWidth: 220 }}
-        />
+        <div className="flex gap-2 items-center">
+          <input
+            type="text"
+            placeholder="Search by name or surname..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="border rounded px-3 py-1"
+            style={{ minWidth: 220 }}
+          />
+          <select value={sortField} onChange={e => setSortField(e.target.value as 'cust_surname' | 'cust_name')} className="border rounded px-2 py-1">
+            <option value="cust_surname">Sort by Surname</option>
+            <option value="cust_name">Sort by Name</option>
+          </select>
+          <select value={sortOrder} onChange={e => setSortOrder(e.target.value as 'asc' | 'desc')} className="border rounded px-2 py-1">
+            <option value="asc">Asc</option>
+            <option value="desc">Desc</option>
+          </select>
+        </div>
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded"
           onClick={() => setIsCreating(true)}
@@ -152,6 +164,13 @@ const CustomerCards = () => {
                 card.cust_surname.toLowerCase().includes(q) ||
                 card.cust_name.toLowerCase().includes(q)
               );
+            })
+            .sort((a, b) => {
+              const fieldA = a[sortField].toLowerCase();
+              const fieldB = b[sortField].toLowerCase();
+              if (fieldA < fieldB) return sortOrder === 'asc' ? -1 : 1;
+              if (fieldA > fieldB) return sortOrder === 'asc' ? 1 : -1;
+              return 0;
             })
             .map((card) => (
               <CustomerCardComponent
