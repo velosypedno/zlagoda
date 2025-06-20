@@ -39,4 +39,7 @@ export const updateProductQuantity = (upc: string, quantityChange: number) =>
   axios.patch(`/api/store-products/${upc}/quantity`, { quantity_change: quantityChange });
 
 export const checkStockAvailability = (upc: string, quantity: number) =>
-  axios.get(`/api/store-products/${upc}/stock-check?quantity=${quantity}`); 
+  axios.get(`/api/store-products/${upc}/stock-check?quantity=${quantity}`);
+
+export const updateProductDelivery = (upc: string, quantityChange: number, newPrice?: number) =>
+  axios.patch(`/api/store-products/${upc}/delivery`, { quantity_change: quantityChange, new_price: newPrice }); 

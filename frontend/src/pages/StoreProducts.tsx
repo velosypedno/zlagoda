@@ -502,6 +502,7 @@ const StoreProducts = () => {
               onEdit={handleEdit}
               onDelete={handleDelete}
               onUpdateQuantity={handleUpdateQuantity}
+              onDeliveryUpdate={loadData}
             />
           ))}
         </div>

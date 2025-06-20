@@ -498,3 +498,44 @@ func NewStoreProductStockCheckGETHandler(service storeProductInventoryManager) g
 		})
 	}
 }
+
+type storeProductDeliveryUpdater interface {
+	UpdateProductDelivery(upc string, quantityChange int, newPrice *float64) error
+}
+
+func NewStoreProductDeliveryPATCHHandler(service storeProductDeliveryUpdater) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		upc := c.Param("upc")
+		if len(upc) != 12 {
+			log.Printf("[StoreProductDeliveryPATCH] Invalid UPC format: %s", upc)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UPC format"})
+			return
+		}
+
+		type request struct {
+			QuantityChange int      `json:"quantity_change" binding:"required"`
+			NewPrice       *float64 `json:"new_price" binding:"omitempty,gte=0"`
+		}
+		var req request
+		if err := c.ShouldBindJSON(&req); err != nil {
+			log.Printf("[StoreProductDeliveryPATCH] BindJSON error for UPC %s: %v", upc, err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
+			return
+		}
+
+		if req.NewPrice != nil && !utils.IsAmountValid(*req.NewPrice) {
+			log.Printf("[StoreProductDeliveryPATCH] Invalid new price for UPC %s: %v", upc, *req.NewPrice)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid new price"})
+			return
+		}
+
+		err := service.UpdateProductDelivery(upc, req.QuantityChange, req.NewPrice)
+		if err != nil {
+			log.Printf("[StoreProductDeliveryPATCH] Service error for UPC %s, quantity change %d, new price %v: %v", upc, req.QuantityChange, req.NewPrice, err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to update delivery: " + err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Product delivery updated successfully"})
+	}
+}

@@ -65,6 +65,7 @@ func SetupRoutes(c *ioc.HandlerContainer) *gin.Engine {
 		api.PATCH("/store-products/:upc", c.StoreProductUpdatePATCHHandler)
 		api.PATCH("/store-products/:upc/quantity", c.StoreProductQuantityUpdatePATCHHandler)
 		api.GET("/store-products/:upc/stock-check", c.StoreProductStockCheckGETHandler)
+		api.PATCH("/store-products/:upc/delivery", c.StoreProductDeliveryPATCHHandler)
 
 		api.POST("/sales", c.SaleCreatePOSTHandler)
 		api.GET("/sales", c.SalesListGETHandler)

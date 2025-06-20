@@ -15,6 +15,7 @@ type StoreProductRepo interface {
 	CheckStockAvailability(upc string, requiredQuantity int) (bool, error)
 	RetrieveStoreProductsByCategory(categoryID int) ([]models.StoreProductWithDetails, error)
 	RetrieveStoreProductsByName(name string) ([]models.StoreProductWithDetails, error)
+	UpdateProductDelivery(upc string, quantityChange int, newPrice *float64) error
 }
 
 type StoreProductService struct {
@@ -71,4 +72,8 @@ func (s *StoreProductService) GetStoreProductsByCategory(categoryID int) ([]mode
 
 func (s *StoreProductService) GetStoreProductsByName(name string) ([]models.StoreProductWithDetails, error) {
 	return s.repo.RetrieveStoreProductsByName(name)
+}
+
+func (s *StoreProductService) UpdateProductDelivery(upc string, quantityChange int, newPrice *float64) error {
+	return s.repo.UpdateProductDelivery(upc, quantityChange, newPrice)
 }

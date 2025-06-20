@@ -60,6 +60,7 @@ type HandlerContainer struct {
 	StoreProductDeleteDELETEHandler        gin.HandlerFunc
 	StoreProductQuantityUpdatePATCHHandler gin.HandlerFunc
 	StoreProductStockCheckGETHandler       gin.HandlerFunc
+	StoreProductDeliveryPATCHHandler         gin.HandlerFunc
 
 	SaleCreatePOSTHandler               gin.HandlerFunc
 	SaleRetrieveGETHandler              gin.HandlerFunc
@@ -171,6 +172,7 @@ func BuildHandlerContainer(c *config.Config) (*HandlerContainer, error) {
 		StoreProductDeleteDELETEHandler:        handlers.NewStoreProductDeleteDELETEHandler(storeProductService),
 		StoreProductQuantityUpdatePATCHHandler: handlers.NewStoreProductQuantityUpdatePATCHHandler(storeProductService),
 		StoreProductStockCheckGETHandler:       handlers.NewStoreProductStockCheckGETHandler(storeProductService),
+		StoreProductDeliveryPATCHHandler:         handlers.NewStoreProductDeliveryPATCHHandler(storeProductService),
 
 		SaleCreatePOSTHandler:               handlers.NewSaleCreatePOSTHandler(saleService),
 		SaleRetrieveGETHandler:              handlers.NewSaleRetrieveGETHandler(saleService),

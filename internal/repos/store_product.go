@@ -428,3 +428,31 @@ func (r *StoreProductRepo) RetrieveStoreProductsByName(name string) ([]models.St
 
 	return storeProducts, nil
 }
+
+func (r *StoreProductRepo) UpdateProductDelivery(upc string, quantityChange int, newPrice *float64) error {
+	setParts := []string{"products_number = products_number + $2"}
+	args := []interface{}{upc, quantityChange}
+	argIndex := 3
+	if newPrice != nil {
+		setParts = append(setParts, fmt.Sprintf("selling_price = $%d", argIndex))
+		args = append(args, *newPrice)
+		argIndex++
+	}
+	query := fmt.Sprintf(`
+		UPDATE store_product
+		SET %s
+		WHERE upc = $1 AND products_number + $2 >= 0
+	`, strings.Join(setParts, ", "))
+	result, err := r.db.Exec(query, args...)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("insufficient stock or product not found")
+	}
+	return nil
+}
