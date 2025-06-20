@@ -75,6 +75,7 @@ type HandlerContainer struct {
 	ReceiptTotalGETHandler              gin.HandlerFunc
 	SalesStatsByProductGETHandler       gin.HandlerFunc
 	TopSellingProductsGETHandler        gin.HandlerFunc
+	CheckCreatePOSTHandler gin.HandlerFunc
 }
 
 // Close properly closes the database connection
@@ -124,6 +125,9 @@ func BuildHandlerContainer(c *config.Config) (*HandlerContainer, error) {
 
 	saleRepo := repos.NewSaleRepo(db)
 	saleService := services.NewSaleService(saleRepo)
+
+	checkRepo := repos.NewCheckRepo(db)
+	checkService := services.NewCheckService(checkRepo)
 
 	return &HandlerContainer{
 		DB: db,
@@ -187,5 +191,6 @@ func BuildHandlerContainer(c *config.Config) (*HandlerContainer, error) {
 		ReceiptTotalGETHandler:              handlers.NewReceiptTotalGETHandler(saleService),
 		SalesStatsByProductGETHandler:       handlers.NewSalesStatsByProductGETHandler(saleService),
 		TopSellingProductsGETHandler:        handlers.NewTopSellingProductsGETHandler(saleService),
+		CheckCreatePOSTHandler: handlers.NewCheckCreatePOSTHandler(checkService, c),
 	}, nil
 }
