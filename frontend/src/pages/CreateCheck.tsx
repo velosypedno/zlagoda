@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createCheck } from "../api/checks";
 import type { CheckCreate } from "../types/check";
 import type { StoreProductWithDetails } from "../types/store_product";
+import type { Product } from "../types/product";
 import type { CustomerCard } from "../types/customer_card";
 import type { Employee } from "../types/employee";
 import { fetchStoreProductsWithDetails } from "../api/store_products";
+import { fetchProducts } from "../api/products";
 import { getCustomerCards } from "../api/customer_cards";
 import { fetchEmployees } from "../api/employees";
 
@@ -13,20 +15,30 @@ const CreateCheck = () => {
   const [cardNumber, setCardNumber] = useState<string | undefined>(undefined);
   const [items, setItems] = useState<{ upc: string; product_number: number }[]>([]);
   const [products, setProducts] = useState<StoreProductWithDetails[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [customerCards, setCustomerCards] = useState<CustomerCard[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<any>(null);
+  const itemRefs = useRef<(HTMLSelectElement | null)[]>([]);
 
   useEffect(() => {
     fetchStoreProductsWithDetails().then(res => setProducts(res.data || []));
+    fetchProducts().then(res => setAllProducts(res.data || []));
     getCustomerCards().then(setCustomerCards);
     fetchEmployees().then(res => setEmployees(res.data || []));
   }, []);
 
   const addItem = () => {
+    if (items.length > 0) {
+      const last = items[items.length - 1];
+      if (!last.upc || !last.product_number) return;
+    }
     setItems([...items, { upc: "", product_number: 1 }]);
+    setTimeout(() => {
+      if (itemRefs.current[items.length]) itemRefs.current[items.length]?.focus();
+    }, 100);
   };
 
   const updateItem = (idx: number, field: "upc" | "product_number", value: any) => {
@@ -52,6 +64,21 @@ const CreateCheck = () => {
     setLoading(true);
     setError(null);
     setSuccess(null);
+    if (!employeeId) {
+      setError("Please select a cashier.");
+      setLoading(false);
+      return;
+    }
+    if (items.length === 0) {
+      setError("Please add at least one item.");
+      setLoading(false);
+      return;
+    }
+    if (items.some(i => !i.upc || !i.product_number || i.product_number < 1)) {
+      setError("Please select a product and quantity for each item.");
+      setLoading(false);
+      return;
+    }
     try {
       const today = new Date();
       const yyyy = today.getFullYear();
@@ -74,6 +101,8 @@ const CreateCheck = () => {
       const res = await createCheck(check);
       setSuccess(res.data);
       setItems([]);
+      setEmployeeId("");
+      setCardNumber(undefined);
     } catch (err: any) {
       setError(err?.response?.data?.error || "Failed to create check");
     } finally {
@@ -98,17 +127,20 @@ const CreateCheck = () => {
       <h1 className="text-2xl font-bold mb-4">Create Check (Receipt)</h1>
       {error && <div className="bg-red-100 text-red-700 p-2 mb-2 rounded">{error}</div>}
       {success && (
-        <div className="bg-green-100 text-green-700 p-2 mb-2 rounded">
-          Check created! Receipt: {success.receipt_number}, Total: {success.total_sum}, VAT: {success.vat}
+        <div className="bg-green-100 text-green-700 p-2 mb-2 rounded flex flex-col gap-2">
+          <div>
+            Check created! Receipt: <b>{success.receipt_number}</b>, Total: <b>{success.total_sum}</b>, VAT: <b>{success.vat}</b>
+          </div>
+          <button className="bg-blue-500 text-white px-3 py-1 rounded w-fit" onClick={() => setSuccess(null)}>Create another check</button>
         </div>
       )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label>Cashier (Employee) *</label>
+          <label className="font-medium">Cashier (Employee) *</label>
           <select
             value={employeeId}
             onChange={e => setEmployeeId(e.target.value)}
-            className="w-full border p-2 rounded"
+            className="w-full border p-2 rounded mt-1"
             required
           >
             <option value="">Select cashier...</option>
@@ -118,62 +150,105 @@ const CreateCheck = () => {
               </option>
             ))}
           </select>
+          <div className="text-xs text-gray-500 mt-1">Select the cashier responsible for this check.</div>
         </div>
         <div>
-          <label>Customer Card (optional)</label>
+          <label className="font-medium">Customer Card (optional)</label>
           <select
             value={cardNumber || ""}
             onChange={e => setCardNumber(e.target.value || undefined)}
-            className="w-full border p-2 rounded"
+            className="w-full border p-2 rounded mt-1"
           >
             <option value="">No card</option>
             {customerCards.map(card => (
               <option key={card.card_number} value={card.card_number}>
-                {card.cust_surname} {card.cust_name} {card.cust_patronymic || ""} ({card.card_number})
+                {card.cust_surname} {card.cust_name} {card.cust_patronymic || ""} ({card.card_number}) — {card.percent}%
               </option>
             ))}
           </select>
+          <div className="text-xs text-gray-500 mt-1">If the customer has a loyalty card, select it to apply a discount.</div>
         </div>
         <div>
-          <label>Items</label>
-          <button type="button" onClick={addItem} className="ml-2 px-2 py-1 bg-blue-500 text-white rounded">Add Item</button>
-          {items.map((item, idx) => {
-            const { price, isPromo, total } = getItemPrice(item.upc, item.product_number);
-            const product = products.find(p => p.upc === item.upc);
-            return (
-              <div key={idx} className="flex gap-2 mt-2 items-center">
-                <select value={item.upc} onChange={e => updateItem(idx, "upc", e.target.value)} className="border p-2 rounded">
-                  <option value="">Select product</option>
-                  {products.map(p => (
-                    <option key={p.upc} value={p.upc}>{p.product_name} ({p.upc})</option>
-                  ))}
-                </select>
-                <input type="number" min={1} value={item.product_number} onChange={e => updateItem(idx, "product_number", e.target.value)} className="w-20 border p-2 rounded" placeholder="Qty" />
-                <span className="w-32">
-                  {item.upc && product && (
-                    <>
-                      {isPromo ? (
-                        <span className="text-orange-600 font-semibold">${price.toFixed(2)} (Promo -20%)</span>
-                      ) : (
-                        <span>${price.toFixed(2)}</span>
-                      )}
-                    </>
-                  )}
-                </span>
-                <span className="w-24 text-right">{item.upc ? `Total: $${total.toFixed(2)}` : ""}</span>
-                <button type="button" onClick={() => removeItem(idx)} className="text-red-500">Remove</button>
-              </div>
-            );
-          })}
+          <label className="font-medium">Items</label>
+          <button type="button" onClick={addItem} className="ml-2 px-2 py-1 bg-blue-500 text-white rounded text-sm">Add Item</button>
+          <div className="overflow-x-auto mt-2">
+            <table className="min-w-full border text-sm">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="px-2 py-1 border">Product</th>
+                  <th className="px-2 py-1 border">Qty</th>
+                  <th className="px-2 py-1 border">Price</th>
+                  <th className="px-2 py-1 border">Total</th>
+                  <th className="px-2 py-1 border">Remove</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item, idx) => {
+                  const { price, isPromo, total } = getItemPrice(item.upc, item.product_number);
+                  const product = products.find(p => p.upc === item.upc);
+                  const characteristics = product ? allProducts.find(prod => prod.id === product.product_id)?.characteristics : undefined;
+                  return (
+                    <tr key={idx}>
+                      <td className="border px-2 py-1">
+                        <select
+                          ref={el => { itemRefs.current[idx] = el; }}
+                          value={item.upc}
+                          onChange={e => updateItem(idx, "upc", e.target.value)}
+                          className="border p-1 rounded w-full"
+                        >
+                          <option value="">Select product</option>
+                          {products.map(p => (
+                            <option key={p.upc} value={p.upc}>{p.product_name} ({p.upc})</option>
+                          ))}
+                        </select>
+                        {characteristics && (
+                          <div className="text-xs text-gray-500 mt-1">{characteristics}</div>
+                        )}
+                      </td>
+                      <td className="border px-2 py-1">
+                        <input
+                          type="number"
+                          min={1}
+                          value={item.product_number}
+                          onChange={e => updateItem(idx, "product_number", e.target.value)}
+                          className="w-16 border p-1 rounded"
+                        />
+                      </td>
+                      <td className="border px-2 py-1 text-right">
+                        {item.upc && product && (
+                          isPromo ? (
+                            <span className="text-orange-600 font-semibold">${price.toFixed(2)} <span className="text-xs">(Promo -20%)</span></span>
+                          ) : (
+                            <span>${price.toFixed(2)}</span>
+                          )
+                        )}
+                      </td>
+                      <td className="border px-2 py-1 text-right">
+                        {item.upc ? `$${total.toFixed(2)}` : ""}
+                      </td>
+                      <td className="border px-2 py-1 text-center">
+                        <button type="button" onClick={() => removeItem(idx)} className="text-red-500 hover:underline">Remove</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {items.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="text-center text-gray-400 py-4">No items added.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div className="text-right font-bold text-lg">
+        <div className="text-right font-bold text-lg mt-4">
           Subtotal: ${subtotal.toFixed(2)}<br />
           {discountPercent > 0 && (
             <span className="text-green-700">Discount ({discountPercent}%): -${discountAmount.toFixed(2)}</span>
           )}<br />
           Final Total: ${total.toFixed(2)}
         </div>
-        <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded" disabled={loading}>{loading ? "Creating..." : "Create Check"}</button>
+        <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded mt-2" disabled={loading}>{loading ? "Creating..." : "Create Check"}</button>
       </form>
     </div>
   );

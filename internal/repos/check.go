@@ -3,7 +3,10 @@ package repos
 import (
 	"database/sql"
 	"fmt"
+<<<<<<< HEAD
 
+=======
+>>>>>>> feature/check
 	"github.com/velosypedno/zlagoda/internal/models"
 	"github.com/velosypedno/zlagoda/internal/utils"
 )
@@ -24,7 +27,11 @@ func (r *CheckRepoImpl) BeginTx() (*sql.Tx, error) {
 func getNewCheckReceiptNumber(tx *sql.Tx) (string, error) {
 	const maxRetries = 10
 	for i := 0; i < maxRetries; i++ {
+<<<<<<< HEAD
 		receiptNumber, err := utils.GenerateID(10)
+=======
+		receiptNumber, err := utils.GenerateSecureID(10)
+>>>>>>> feature/check
 		if err != nil {
 			return "", err
 		}
@@ -78,3 +85,44 @@ func (r *CheckRepoImpl) GetStoreProductStockTx(tx *sql.Tx, upc string) (int, err
 	err := tx.QueryRow(query, upc).Scan(&stock)
 	return stock, err
 }
+<<<<<<< HEAD
+=======
+
+func (r *CheckRepoImpl) RetrieveChecks() ([]models.ReceiptRetrieve, error) {
+	query := `
+		SELECT
+			receipt_number,
+			employee_id,
+			card_number,
+			print_date,
+			sum_total,
+			vat
+		FROM receipt
+		ORDER BY print_date DESC, receipt_number DESC
+	`
+	rows, err := r.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var checks []models.ReceiptRetrieve
+	for rows.Next() {
+		var check models.ReceiptRetrieve
+		err := rows.Scan(
+			&check.ReceiptNumber,
+			&check.EmployeeId,
+			&check.CardNumber,
+			&check.PrintDate,
+			&check.TotalSum,
+			&check.VAT,
+		)
+		if err != nil {
+			return nil, err
+		}
+		checks = append(checks, check)
+	}
+
+	return checks, nil
+} 
+>>>>>>> feature/check
