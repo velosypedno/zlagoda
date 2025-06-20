@@ -7,6 +7,8 @@ const CategoriesPage = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
+  const [search, setSearch] = useState("");
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>("asc");
 
   const loadCategories = async () => {
     try {
@@ -59,6 +61,22 @@ const CategoriesPage = () => {
     <div className="p-6 max-w-5xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Categories</h1>
 
+      <input
+        type="text"
+        placeholder="Search categories by name..."
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        className="mb-6 border rounded px-3 py-2 w-full max-w-xs"
+      />
+      <select
+        value={sortOrder}
+        onChange={e => setSortOrder(e.target.value as 'asc' | 'desc')}
+        className="mb-6 ml-2 border rounded px-3 py-2"
+      >
+        <option value="asc">Sort A-Z</option>
+        <option value="desc">Sort Z-A</option>
+      </select>
+
       {error && <div className="mb-4 text-red-500">{error}</div>}
 
       <div className="flex mb-6 gap-2">
@@ -78,16 +96,27 @@ const CategoriesPage = () => {
         </button>
       </div>
 
-
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {categories.map((category) => (
-          <CategoryCard
-            key={category.id}
-            category={category}
-            onDelete={() => handleDelete(category.id)}
-            onUpdate={(name) => handleUpdate(category.id, name)}
-          />
-        ))}
+        {categories
+          .filter(category => {
+            const q = search.trim().toLowerCase();
+            return !q || category.name.toLowerCase().includes(q);
+          })
+          .sort((a, b) => {
+            const nameA = a.name.toLowerCase();
+            const nameB = b.name.toLowerCase();
+            if (nameA < nameB) return sortOrder === 'asc' ? -1 : 1;
+            if (nameA > nameB) return sortOrder === 'asc' ? 1 : -1;
+            return 0;
+          })
+          .map((category) => (
+            <CategoryCard
+              key={category.id}
+              category={category}
+              onDelete={() => handleDelete(category.id)}
+              onUpdate={(name) => handleUpdate(category.id, name)}
+            />
+          ))}
       </div>
     </div>
   );
