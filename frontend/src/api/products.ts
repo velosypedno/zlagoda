@@ -3,6 +3,12 @@ import { type Product, type ProductCreate, type ProductUpdate } from "../types/p
 
 export const fetchProducts = () => axios.get<Product[]>("/api/products");
 
+export const fetchProductsByCategory = (categoryId: number) => 
+  axios.get<Product[]>(`/api/products/by-category/${categoryId}`);
+
+export const fetchProductsByName = (name: string) => 
+  axios.get<Product[]>(`/api/products/search?name=${encodeURIComponent(name)}`);
+
 export const fetchProduct = (id: number) => axios.get<Product>(`/api/products/${id}`);
 
 export const createProduct = (product: ProductCreate) =>

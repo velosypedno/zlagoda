@@ -11,6 +11,12 @@ export const fetchStoreProducts = () => axios.get<StoreProduct[]>("/api/store-pr
 export const fetchStoreProductsWithDetails = () => 
   axios.get<StoreProductWithDetails[]>("/api/store-products/details");
 
+export const fetchStoreProductsByCategory = (categoryId: number) => 
+  axios.get<StoreProductWithDetails[]>(`/api/store-products/by-category/${categoryId}`);
+
+export const fetchStoreProductsByName = (name: string) => 
+  axios.get<StoreProductWithDetails[]>(`/api/store-products/search?name=${encodeURIComponent(name)}`);
+
 export const fetchStoreProduct = (upc: string) => 
   axios.get<StoreProduct>(`/api/store-products/${upc}`);
 

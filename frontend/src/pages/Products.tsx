@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import type { Product, ProductCreate, ProductUpdate } from "../types/product";
 import type { Category } from "../types/category";
-import { fetchProducts, createProduct, updateProduct, deleteProduct } from "../api/products";
+import { fetchProducts, fetchProductsByCategory, fetchProductsByName, createProduct, updateProduct, deleteProduct } from "../api/products";
 import { fetchCategories } from "../api/categories";
 import ProductCard from "../components/ProductCard";
 
@@ -18,9 +18,19 @@ const Products = () => {
     category_id: 0,
   });
 
+  // Filtering and search state
+  const [selectedCategory, setSelectedCategory] = useState<number>(0);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [sortBy, setSortBy] = useState<"name" | "id">("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    loadFilteredProducts();
+  }, [selectedCategory, searchTerm]);
 
   const loadData = async () => {
     try {
@@ -38,6 +48,75 @@ const Products = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadFilteredProducts = async () => {
+    try {
+      setLoading(true);
+      let productsData;
+      
+      if (searchTerm.trim()) {
+        productsData = await fetchProductsByName(searchTerm.trim());
+      } else if (selectedCategory > 0) {
+        productsData = await fetchProductsByCategory(selectedCategory);
+      } else {
+        productsData = await fetchProducts();
+      }
+      
+      setProducts(productsData.data || []);
+      setError(null);
+    } catch (err) {
+      setError("Failed to load filtered products");
+      console.error("Error loading filtered products:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSort = (field: "name" | "id") => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(field);
+      setSortOrder("asc");
+    }
+  };
+
+  const getSortedProducts = () => {
+    return [...products].sort((a, b) => {
+      let aValue, bValue;
+      
+      if (sortBy === "name") {
+        aValue = a.name.toLowerCase();
+        bValue = b.name.toLowerCase();
+      } else {
+        aValue = a.id;
+        bValue = b.id;
+      }
+      
+      if (sortOrder === "asc") {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      } else {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+      }
+    });
+  };
+
+  const handleCategoryChange = (categoryId: number) => {
+    setSelectedCategory(categoryId);
+    setSearchTerm(""); // Clear search when changing category
+  };
+
+  const handleSearchChange = (term: string) => {
+    setSearchTerm(term);
+    setSelectedCategory(0); // Clear category filter when searching
+  };
+
+  const clearFilters = () => {
+    setSelectedCategory(0);
+    setSearchTerm("");
+    setSortBy("name");
+    setSortOrder("asc");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -125,6 +204,85 @@ const Products = () => {
         </div>
       )}
 
+      {/* Filtering, Search, and Sorting Controls */}
+      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          {/* Category Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Filter by Category
+            </label>
+            <select
+              value={selectedCategory}
+              onChange={(e) => handleCategoryChange(parseInt(e.target.value))}
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value={0}>All Categories</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Search */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Search by Name
+            </label>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              placeholder="Enter product name..."
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Sort By */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Sort By
+            </label>
+            <select
+              value={sortBy}
+              onChange={(e) => handleSort(e.target.value as "name" | "id")}
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="name">Name</option>
+              <option value="id">ID</option>
+            </select>
+          </div>
+
+          {/* Sort Order */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Sort Order
+            </label>
+            <button
+              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white hover:bg-gray-50"
+            >
+              {sortOrder === "asc" ? "↑ Ascending" : "↓ Descending"}
+            </button>
+          </div>
+        </div>
+
+        {/* Clear Filters Button */}
+        <div className="flex justify-between items-center">
+          <button
+            onClick={clearFilters}
+            className="text-gray-600 hover:text-gray-800 text-sm underline"
+          >
+            Clear all filters
+          </button>
+          <div className="text-sm text-gray-500">
+            Showing {getSortedProducts().length} products
+          </div>
+        </div>
+      </div>
+
       {showForm && (
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <h2 className="text-xl font-semibold mb-4">
@@ -201,7 +359,7 @@ const Products = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.map((product) => (
+          {getSortedProducts().map((product) => (
             <ProductCard
               key={product.id}
               product={product}

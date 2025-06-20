@@ -122,6 +122,8 @@ type storeProductReader interface {
 	GetStoreProductsWithDetails() ([]models.StoreProductWithDetails, error)
 	GetStoreProductsByProductID(productID int) ([]models.StoreProductRetrieve, error)
 	GetPromotionalProducts() ([]models.StoreProductRetrieve, error)
+	GetStoreProductsByCategory(categoryID int) ([]models.StoreProductWithDetails, error)
+	GetStoreProductsByName(name string) ([]models.StoreProductWithDetails, error)
 }
 
 func NewStoreProductRetrieveGETHandler(service storeProductReader) gin.HandlerFunc {
@@ -282,6 +284,47 @@ func NewPromotionalProductsGETHandler(service storeProductReader) gin.HandlerFun
 		}
 
 		c.JSON(http.StatusOK, resp)
+	}
+}
+
+func NewStoreProductsByCategoryGETHandler(service storeProductReader) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		categoryIDStr := c.Param("category_id")
+		categoryID, err := strconv.Atoi(categoryIDStr)
+		if err != nil {
+			log.Printf("[StoreProductsByCategoryGET] Invalid category ID: %s", categoryIDStr)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid category ID"})
+			return
+		}
+
+		storeProducts, err := service.GetStoreProductsByCategory(categoryID)
+		if err != nil {
+			log.Printf("[StoreProductsByCategoryGET] Service error for category ID %d: %v", categoryID, err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve store products: " + err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, storeProducts)
+	}
+}
+
+func NewStoreProductsByNameGETHandler(service storeProductReader) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		name := c.Query("name")
+		if name == "" {
+			log.Printf("[StoreProductsByNameGET] Missing name parameter")
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Missing name parameter"})
+			return
+		}
+
+		storeProducts, err := service.GetStoreProductsByName(name)
+		if err != nil {
+			log.Printf("[StoreProductsByNameGET] Service error for name '%s': %v", name, err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve store products: " + err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, storeProducts)
 	}
 }
 

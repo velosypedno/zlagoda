@@ -43,6 +43,8 @@ type HandlerContainer struct {
 	ProductCreatePOSTHandler   gin.HandlerFunc
 	ProductRetrieveGETHandler  gin.HandlerFunc
 	ProductsListGETHandler     gin.HandlerFunc
+	ProductsByCategoryGETHandler gin.HandlerFunc
+	ProductsByNameGETHandler   gin.HandlerFunc
 	ProductDeleteDELETEHandler gin.HandlerFunc
 	ProductUpdatePATCHHandler  gin.HandlerFunc
 
@@ -51,6 +53,8 @@ type HandlerContainer struct {
 	StoreProductsListGETHandler            gin.HandlerFunc
 	StoreProductsWithDetailsListGETHandler gin.HandlerFunc
 	StoreProductsByProductIDGETHandler     gin.HandlerFunc
+	StoreProductsByCategoryGETHandler      gin.HandlerFunc
+	StoreProductsByNameGETHandler          gin.HandlerFunc
 	PromotionalProductsGETHandler          gin.HandlerFunc
 	StoreProductUpdatePATCHHandler         gin.HandlerFunc
 	StoreProductDeleteDELETEHandler        gin.HandlerFunc
@@ -150,6 +154,8 @@ func BuildHandlerContainer(c *config.Config) (*HandlerContainer, error) {
 		ProductCreatePOSTHandler:   handlers.NewProductCreatePOSTHandler(productService),
 		ProductRetrieveGETHandler:  handlers.NewProductRetrieveGETHandler(productService),
 		ProductsListGETHandler:     handlers.NewProductsListGETHandler(productService),
+		ProductsByCategoryGETHandler: handlers.NewProductsByCategoryGETHandler(productService),
+		ProductsByNameGETHandler:    handlers.NewProductsByNameGETHandler(productService),
 		ProductDeleteDELETEHandler: handlers.NewProductDeleteDELETEHandler(productService),
 		ProductUpdatePATCHHandler:  handlers.NewProductUpdatePATCHHandler(productService),
 
@@ -158,6 +164,8 @@ func BuildHandlerContainer(c *config.Config) (*HandlerContainer, error) {
 		StoreProductsListGETHandler:            handlers.NewStoreProductsListGETHandler(storeProductService),
 		StoreProductsWithDetailsListGETHandler: handlers.NewStoreProductsWithDetailsListGETHandler(storeProductService),
 		StoreProductsByProductIDGETHandler:     handlers.NewStoreProductsByProductIDGETHandler(storeProductService),
+		StoreProductsByCategoryGETHandler:       handlers.NewStoreProductsByCategoryGETHandler(storeProductService),
+		StoreProductsByNameGETHandler:            handlers.NewStoreProductsByNameGETHandler(storeProductService),
 		PromotionalProductsGETHandler:          handlers.NewPromotionalProductsGETHandler(storeProductService),
 		StoreProductUpdatePATCHHandler:         handlers.NewStoreProductUpdatePATCHHandler(storeProductService),
 		StoreProductDeleteDELETEHandler:        handlers.NewStoreProductDeleteDELETEHandler(storeProductService),

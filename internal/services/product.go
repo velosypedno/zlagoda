@@ -25,6 +25,14 @@ func (s *ProductService) GetProducts() ([]models.ProductRetrieve, error) {
 	return s.repo.RetrieveProducts()
 }
 
+func (s *ProductService) GetProductsByCategory(categoryID int) ([]models.ProductRetrieve, error) {
+	return s.repo.RetrieveProductsByCategory(categoryID)
+}
+
+func (s *ProductService) GetProductsByName(name string) ([]models.ProductRetrieve, error) {
+	return s.repo.RetrieveProductsByName(name)
+}
+
 func (s *ProductService) UpdateProduct(id int, p models.ProductUpdate) error {
 	return s.repo.UpdateProduct(id, p)
 }

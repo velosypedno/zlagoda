@@ -13,6 +13,8 @@ type StoreProductRepo interface {
 	DeleteStoreProduct(upc string) error
 	UpdateProductQuantity(upc string, quantityChange int) error
 	CheckStockAvailability(upc string, requiredQuantity int) (bool, error)
+	RetrieveStoreProductsByCategory(categoryID int) ([]models.StoreProductWithDetails, error)
+	RetrieveStoreProductsByName(name string) ([]models.StoreProductWithDetails, error)
 }
 
 type StoreProductService struct {
@@ -61,4 +63,12 @@ func (s *StoreProductService) UpdateProductQuantity(upc string, quantityChange i
 
 func (s *StoreProductService) CheckStockAvailability(upc string, requiredQuantity int) (bool, error) {
 	return s.repo.CheckStockAvailability(upc, requiredQuantity)
+}
+
+func (s *StoreProductService) GetStoreProductsByCategory(categoryID int) ([]models.StoreProductWithDetails, error) {
+	return s.repo.RetrieveStoreProductsByCategory(categoryID)
+}
+
+func (s *StoreProductService) GetStoreProductsByName(name string) ([]models.StoreProductWithDetails, error) {
+	return s.repo.RetrieveStoreProductsByName(name)
 }

@@ -47,6 +47,8 @@ func SetupRoutes(c *ioc.HandlerContainer) *gin.Engine {
 
 		api.POST("/products", c.ProductCreatePOSTHandler)
 		api.GET("/products", c.ProductsListGETHandler)
+		api.GET("/products/search", c.ProductsByNameGETHandler)
+		api.GET("/products/by-category/:category_id", c.ProductsByCategoryGETHandler)
 		api.GET("/products/:id", c.ProductRetrieveGETHandler)
 		api.DELETE("/products/:id", c.ProductDeleteDELETEHandler)
 		api.PATCH("/products/:id", c.ProductUpdatePATCHHandler)
@@ -54,6 +56,8 @@ func SetupRoutes(c *ioc.HandlerContainer) *gin.Engine {
 		api.POST("/store-products", c.StoreProductCreatePOSTHandler)
 		api.GET("/store-products", c.StoreProductsListGETHandler)
 		api.GET("/store-products/details", c.StoreProductsWithDetailsListGETHandler)
+		api.GET("/store-products/search", c.StoreProductsByNameGETHandler)
+		api.GET("/store-products/by-category/:category_id", c.StoreProductsByCategoryGETHandler)
 		api.GET("/store-products/promotional", c.PromotionalProductsGETHandler)
 		api.GET("/store-products/by-product/:product_id", c.StoreProductsByProductIDGETHandler)
 		api.GET("/store-products/:upc", c.StoreProductRetrieveGETHandler)

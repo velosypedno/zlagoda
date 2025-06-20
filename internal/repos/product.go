@@ -12,6 +12,8 @@ type ProductRepo interface {
 	CreateProduct(p models.ProductCreate) (int, error)
 	RetrieveProductByID(id int) (models.ProductRetrieve, error)
 	RetrieveProducts() ([]models.ProductRetrieve, error)
+	RetrieveProductsByCategory(categoryID int) ([]models.ProductRetrieve, error)
+	RetrieveProductsByName(name string) ([]models.ProductRetrieve, error)
 	UpdateProduct(id int, p models.ProductUpdate) error
 	DeleteProduct(id int) error
 }
@@ -50,6 +52,52 @@ func (r *productRepo) RetrieveProducts() ([]models.ProductRetrieve, error) {
 	rows, err := r.db.Query(
 		`SELECT product_id, product_name, characteristics, category_id
 		 FROM product`,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []models.ProductRetrieve
+	for rows.Next() {
+		var pr models.ProductRetrieve
+		if err := rows.Scan(&pr.ID, &pr.Name, &pr.Characteristics, &pr.CategoryID); err != nil {
+			return nil, err
+		}
+		list = append(list, pr)
+	}
+	return list, rows.Err()
+}
+
+func (r *productRepo) RetrieveProductsByCategory(categoryID int) ([]models.ProductRetrieve, error) {
+	rows, err := r.db.Query(
+		`SELECT product_id, product_name, characteristics, category_id
+		 FROM product
+		 WHERE category_id = $1`,
+		categoryID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []models.ProductRetrieve
+	for rows.Next() {
+		var pr models.ProductRetrieve
+		if err := rows.Scan(&pr.ID, &pr.Name, &pr.Characteristics, &pr.CategoryID); err != nil {
+			return nil, err
+		}
+		list = append(list, pr)
+	}
+	return list, rows.Err()
+}
+
+func (r *productRepo) RetrieveProductsByName(name string) ([]models.ProductRetrieve, error) {
+	rows, err := r.db.Query(
+		`SELECT product_id, product_name, characteristics, category_id
+		 FROM product
+		 WHERE product_name LIKE $1`,
+		"%"+name+"%",
 	)
 	if err != nil {
 		return nil, err

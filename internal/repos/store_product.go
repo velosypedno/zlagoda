@@ -332,3 +332,99 @@ func (r *StoreProductRepo) CheckStockAvailability(upc string, requiredQuantity i
 
 	return currentStock >= requiredQuantity, nil
 }
+
+func (r *StoreProductRepo) RetrieveStoreProductsByCategory(categoryID int) ([]models.StoreProductWithDetails, error) {
+	query := `
+		SELECT
+			sp.upc,
+			sp.upc_prom,
+			sp.product_id,
+			p.product_name,
+			c.category_name,
+			p.characteristics,
+			sp.selling_price,
+			sp.products_number,
+			sp.promotional_product
+		FROM store_product sp
+		JOIN product p ON sp.product_id = p.product_id
+		JOIN category c ON p.category_id = c.category_id
+		WHERE c.category_id = $1
+		ORDER BY sp.upc
+	`
+
+	rows, err := r.db.Query(query, categoryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var storeProducts []models.StoreProductWithDetails
+	for rows.Next() {
+		var storeProduct models.StoreProductWithDetails
+		err := rows.Scan(
+			&storeProduct.UPC,
+			&storeProduct.UPCProm,
+			&storeProduct.ProductID,
+			&storeProduct.ProductName,
+			&storeProduct.CategoryName,
+			&storeProduct.Characteristics,
+			&storeProduct.SellingPrice,
+			&storeProduct.ProductsNumber,
+			&storeProduct.PromotionalProduct,
+		)
+		if err != nil {
+			return nil, err
+		}
+		storeProducts = append(storeProducts, storeProduct)
+	}
+
+	return storeProducts, nil
+}
+
+func (r *StoreProductRepo) RetrieveStoreProductsByName(name string) ([]models.StoreProductWithDetails, error) {
+	query := `
+		SELECT
+			sp.upc,
+			sp.upc_prom,
+			sp.product_id,
+			p.product_name,
+			c.category_name,
+			p.characteristics,
+			sp.selling_price,
+			sp.products_number,
+			sp.promotional_product
+		FROM store_product sp
+		JOIN product p ON sp.product_id = p.product_id
+		JOIN category c ON p.category_id = c.category_id
+		WHERE p.product_name LIKE $1
+		ORDER BY sp.upc
+	`
+
+	rows, err := r.db.Query(query, "%"+name+"%")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var storeProducts []models.StoreProductWithDetails
+	for rows.Next() {
+		var storeProduct models.StoreProductWithDetails
+		err := rows.Scan(
+			&storeProduct.UPC,
+			&storeProduct.UPCProm,
+			&storeProduct.ProductID,
+			&storeProduct.ProductName,
+			&storeProduct.CategoryName,
+			&storeProduct.Characteristics,
+			&storeProduct.SellingPrice,
+			&storeProduct.ProductsNumber,
+			&storeProduct.PromotionalProduct,
+		)
+		if err != nil {
+			return nil, err
+		}
+		storeProducts = append(storeProducts, storeProduct)
+	}
+
+	return storeProducts, nil
+}

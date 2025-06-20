@@ -82,6 +82,8 @@ func NewProductCreatePOSTHandler(service productCreator) gin.HandlerFunc {
 type productReader interface {
 	GetProductByID(id int) (models.ProductRetrieve, error)
 	GetProducts() ([]models.ProductRetrieve, error)
+	GetProductsByCategory(categoryID int) ([]models.ProductRetrieve, error)
+	GetProductsByName(name string) ([]models.ProductRetrieve, error)
 }
 
 func NewProductRetrieveGETHandler(service productReader) gin.HandlerFunc {
@@ -114,6 +116,65 @@ func NewProductsListGETHandler(service productReader) gin.HandlerFunc {
 		items, err := service.GetProducts()
 		if err != nil {
 			log.Printf("[ProductsListGET] Service error: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve products: " + err.Error()})
+			return
+		}
+
+		resp := make([]gin.H, 0, len(items))
+		for _, p := range items {
+			resp = append(resp, gin.H{
+				"id":              p.ID,
+				"name":            p.Name,
+				"characteristics": p.Characteristics,
+				"category_id":     p.CategoryID,
+			})
+		}
+		c.JSON(http.StatusOK, resp)
+	}
+}
+
+func NewProductsByCategoryGETHandler(service productReader) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		categoryIDStr := c.Param("category_id")
+		categoryID, err := strconv.Atoi(categoryIDStr)
+		if err != nil {
+			log.Printf("[ProductsByCategoryGET] Invalid category ID: %s", categoryIDStr)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid category ID"})
+			return
+		}
+
+		items, err := service.GetProductsByCategory(categoryID)
+		if err != nil {
+			log.Printf("[ProductsByCategoryGET] Service error for category ID %d: %v", categoryID, err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve products: " + err.Error()})
+			return
+		}
+
+		resp := make([]gin.H, 0, len(items))
+		for _, p := range items {
+			resp = append(resp, gin.H{
+				"id":              p.ID,
+				"name":            p.Name,
+				"characteristics": p.Characteristics,
+				"category_id":     p.CategoryID,
+			})
+		}
+		c.JSON(http.StatusOK, resp)
+	}
+}
+
+func NewProductsByNameGETHandler(service productReader) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		name := c.Query("name")
+		if name == "" {
+			log.Printf("[ProductsByNameGET] Missing name parameter")
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Missing name parameter"})
+			return
+		}
+
+		items, err := service.GetProductsByName(name)
+		if err != nil {
+			log.Printf("[ProductsByNameGET] Service error for name '%s': %v", name, err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve products: " + err.Error()})
 			return
 		}
