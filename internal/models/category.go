@@ -10,5 +10,5 @@ type CategoryRetrieve struct {
 }
 
 type CategoryUpdate struct {
-	Name string
+	Name *string
 }

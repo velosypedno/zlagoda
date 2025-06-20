@@ -14,14 +14,14 @@ type customerCardCreator interface {
 func NewCustomerCardCreatePOSTHandler(service customerCardCreator) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		type request struct {
-			Surname     *string `json:"cust_surname" binding:"omitempty,required,max=50"`
-			Name        *string `json:"cust_name" binding:"omitempty,required,max=50"`
-			Patronymic  *string `json:"cust_patronymic" binding:"omitempty,max=50"`
-			PhoneNumber *string `json:"phone_number" binding:"omitempty,required,len=13,startswith=+380"`
-			City        *string `json:"city" binding:"omitempty,max=50"`
-			Street      *string `json:"street" binding:"omitempty,max=50"`
-			ZipCode     *string `json:"zip_code" binding:"omitempty,max=9"`
-			Percent     *int    `json:"percent" binding:"omitempty,required,gte=0"`
+			Surname     *string `json:"cust_surname" binding:"required"`
+			Name        *string `json:"cust_name" binding:"required"`
+			Patronymic  *string `json:"cust_patronymic"`
+			PhoneNumber *string `json:"phone_number" binding:"required,len=13,startswith=+380"`
+			City        *string `json:"city"`
+			Street      *string `json:"street"`
+			ZipCode     *string `json:"zip_code"`
+			Percent     *int    `json:"percent" binding:"required,gte=0"`
 		}
 		var req request
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -171,13 +171,13 @@ func NewCustomerCardUpdatePATCHHandler(service customerCardUpdater) gin.HandlerF
 		}
 
 		type request struct {
-			Surname     *string `json:"cust_surname" binding:"omitempty,max=50"`
-			Name        *string `json:"cust_name" binding:"omitempty,max=50"`
-			Patronymic  *string `json:"cust_patronymic" binding:"omitempty,max=50"`
+			Surname     *string `json:"cust_surname"`
+			Name        *string `json:"cust_name"`
+			Patronymic  *string `json:"cust_patronymic"`
 			PhoneNumber *string `json:"phone_number" binding:"omitempty,len=13,startswith=+380"`
-			City        *string `json:"city" binding:"omitempty,max=50"`
-			Street      *string `json:"street" binding:"omitempty,max=50"`
-			ZipCode     *string `json:"zip_code" binding:"omitempty,max=9"`
+			City        *string `json:"city"`
+			Street      *string `json:"street"`
+			ZipCode     *string `json:"zip_code"`
 			Percent     *int    `json:"percent" binding:"omitempty,gte=0"`
 		}
 		var req request

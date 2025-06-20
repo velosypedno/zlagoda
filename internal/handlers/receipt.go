@@ -17,10 +17,10 @@ type receiptCreator interface {
 func NewReceiptCreatePOSTHandler(service receiptCreator, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		type request struct {
-			EmployeeId *string  `json:"employee_id" binding:"omitempty,required,len=10"`
+			EmployeeId *string  `json:"employee_id" binding:"required,len=10"`
 			CardNumber *string  `json:"card_number" binding:"omitempty,len=13"`
-			PrintDate  *string  `json:"print_date" binding:"omitempty,required"`
-			TotalSum   *float64 `json:"sum_total" binding:"omitempty,required,gte=0"`
+			PrintDate  *string  `json:"print_date" binding:"required"`
+			TotalSum   *float64 `json:"sum_total" binding:"required,gte=0"`
 		}
 		var req request
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -37,7 +37,7 @@ func NewReceiptCreatePOSTHandler(service receiptCreator, cfg *config.Config) gin
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid print date"})
 			return
 		}
-		if !utils.IsAmountValid(*req.TotalSum) {
+		if !utils.IsDecimalValid(*req.TotalSum) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid total sum"})
 			return
 		}
@@ -174,7 +174,7 @@ func NewReceiptUpdatePATCHHandler(service receiptUpdater, cfg *config.Config) gi
 		type request struct {
 			EmployeeId *string  `json:"employee_id" binding:"omitempty,len=10"`
 			CardNumber *string  `json:"card_number" binding:"omitempty,len=13"`
-			PrintDate  *string  `json:"print_date" binding:"omitempty"`
+			PrintDate  *string  `json:"print_date"`
 			TotalSum   *float64 `json:"sum_total" binding:"omitempty,gte=0"`
 		}
 		var req request
@@ -211,7 +211,7 @@ func NewReceiptUpdatePATCHHandler(service receiptUpdater, cfg *config.Config) gi
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid print date"})
 			return
 		}
-		if !utils.IsAmountValid(*req.TotalSum) {
+		if !utils.IsDecimalValid(*req.TotalSum) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid total sum"})
 			return
 		}

@@ -12,12 +12,11 @@ func getNewReceiptNumber(r *ReceiptRepo) (string, error) {
 	const maxRetries = 10
 
 	for i := 0; i < maxRetries; i++ {
-		receiptNumber, err := utils.GenerateSecureID(10)
+		receiptNumber, err := utils.GenerateID(10)
 		if err != nil {
 			return "", fmt.Errorf("failed to generate receipt number: %w", err)
 		}
 
-		// Check if receipt number already exists
 		var exists bool
 		err = r.db.QueryRow("SELECT EXISTS(SELECT 1 FROM receipt WHERE receipt_number = $1)", receiptNumber).Scan(&exists)
 		if err != nil {

@@ -1,12 +1,11 @@
 package models
 
 type StoreProductCreate struct {
-	UPC                string  `json:"upc" binding:"required,len=12"`
 	UPCProm            *string `json:"upc_prom" binding:"omitempty,len=12"`
 	ProductID          int     `json:"product_id" binding:"required"`
 	SellingPrice       float64 `json:"selling_price" binding:"required,gte=0"`
 	ProductsNumber     int     `json:"products_number" binding:"required,gte=0"`
-	PromotionalProduct bool    `json:"promotional_product"`
+	PromotionalProduct bool    `json:"promotional_product" binding:"required"`
 }
 
 type StoreProductRetrieve struct {
@@ -26,7 +25,6 @@ type StoreProductUpdate struct {
 	PromotionalProduct *bool    `json:"promotional_product"`
 }
 
-// Extended model with product details for API responses
 type StoreProductWithDetails struct {
 	UPC                string  `json:"upc"`
 	UPCProm            *string `json:"upc_prom"`

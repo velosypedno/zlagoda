@@ -12,12 +12,11 @@ func getNewEmployeeId(r *EmployeeRepo) (string, error) {
 	const maxRetries = 10
 
 	for i := 0; i < maxRetries; i++ {
-		employeeId, err := utils.GenerateSecureID(10)
+		employeeId, err := utils.GenerateID(10)
 		if err != nil {
 			return "", fmt.Errorf("failed to generate employee ID: %w", err)
 		}
 
-		// Check if employee ID already exists
 		var exists bool
 		err = r.db.QueryRow("SELECT EXISTS(SELECT 1 FROM employee WHERE employee_id = $1)", employeeId).Scan(&exists)
 		if err != nil {

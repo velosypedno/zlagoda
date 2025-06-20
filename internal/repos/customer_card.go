@@ -12,12 +12,11 @@ func getNewCardNumber(r *CustomerCardRepo) (string, error) {
 	const maxRetries = 10
 
 	for i := 0; i < maxRetries; i++ {
-		cardNumber, err := utils.GenerateSecureID(13)
+		cardNumber, err := utils.GenerateID(13)
 		if err != nil {
 			return "", fmt.Errorf("failed to generate card number: %w", err)
 		}
 
-		// Check if card number already exists
 		var exists bool
 		err = r.db.QueryRow("SELECT EXISTS(SELECT 1 FROM customer_card WHERE card_number = $1)", cardNumber).Scan(&exists)
 		if err != nil {

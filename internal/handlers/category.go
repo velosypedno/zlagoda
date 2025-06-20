@@ -119,6 +119,7 @@ func NewCategoryDeleteDELETEHandler(service categoryRemover) gin.HandlerFunc {
 
 type categoryUpdater interface {
 	UpdateCategory(id int, model models.CategoryUpdate) error
+	GetCategoryByID(id int) (models.CategoryRetrieve, error)
 }
 
 func NewCategoryUpdatePATCHHandler(service categoryUpdater) gin.HandlerFunc {
@@ -131,12 +132,21 @@ func NewCategoryUpdatePATCHHandler(service categoryUpdater) gin.HandlerFunc {
 		}
 
 		type request struct {
-			Name string `json:"name" binding:"required"`
+			Name *string `json:"name"`
 		}
 		var req request
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
 			return
+		}
+
+		categoryCurrentState, err := service.GetCategoryByID(id)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Category not found: " + err.Error()})
+			return
+		}
+		if req.Name == nil {
+			req.Name = &categoryCurrentState.Name
 		}
 
 		model := models.CategoryUpdate{

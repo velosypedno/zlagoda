@@ -27,7 +27,7 @@ func NewSaleCreatePOSTHandler(service saleCreator) gin.HandlerFunc {
 			return
 		}
 
-		if !utils.IsAmountValid(req.SellingPrice) {
+		if !utils.IsDecimalValid(req.SellingPrice) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid selling price"})
 			return
 		}
@@ -256,14 +256,13 @@ func NewSaleUpdatePATCHHandler(service saleUpdater) gin.HandlerFunc {
 			return
 		}
 
-		// Check if sale exists
 		_, err := service.GetSaleByKey(upc, receiptNumber)
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Sale not found: " + err.Error()})
 			return
 		}
 
-		if req.SellingPrice != nil && !utils.IsAmountValid(*req.SellingPrice) {
+		if req.SellingPrice != nil && !utils.IsDecimalValid(*req.SellingPrice) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid selling price"})
 			return
 		}

@@ -21,7 +21,7 @@ func Load() *Config {
 		log.Println(err)
 	}
 
-	vatRate := 0.2 // default 20%
+	vatRate := 0.2
 	if envVat := os.Getenv("VAT_RATE"); envVat != "" {
 		if rate, err := strconv.ParseFloat(envVat, 64); err == nil && rate >= 0 && rate <= 1 {
 			vatRate = rate
