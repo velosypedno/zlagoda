@@ -11,7 +11,7 @@ const CategoriesPage = () => {
   const loadCategories = async () => {
     try {
       const res = await fetchCategories();
-      setCategories(res.data);
+      setCategories(res.data || []);
     } catch (err) {
       setError("Failed to load categories");
     }

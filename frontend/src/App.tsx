@@ -3,6 +3,8 @@ import Home from "./pages/Home";
 import CategoriesPage from "./pages/Categories";
 import EmployeesPage from "./pages/Employees";
 import CustomerCardsPage from "./pages/CustomerCards";
+import ProductsPage from "./pages/Products";
+import StoreProductsPage from "./pages/StoreProducts";
 import Navbar from "./components/Navbar";
 
 function App() {
@@ -15,6 +17,8 @@ function App() {
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/employees" element={<EmployeesPage />} />
           <Route path="/customer-cards" element={<CustomerCardsPage />} />
+          <Route path="/products" element={<ProductsPage />} />
+          <Route path="/store-products" element={<StoreProductsPage />} />
         </Routes>
       </div>
     </BrowserRouter>
