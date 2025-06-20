@@ -21,6 +21,8 @@ const CustomerCards = () => {
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<'cust_surname' | 'cust_name'>("cust_surname");
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>("asc");
+  const [percentMin, setPercentMin] = useState<string>("");
+  const [percentMax, setPercentMax] = useState<string>("");
 
   useEffect(() => {
     loadCustomerCards();
@@ -103,6 +105,24 @@ const CustomerCards = () => {
             className="border rounded px-3 py-1"
             style={{ minWidth: 220 }}
           />
+          <input
+            type="number"
+            placeholder="Min %"
+            value={percentMin}
+            onChange={e => setPercentMin(e.target.value)}
+            className="border rounded px-2 py-1 w-20"
+            min={0}
+            max={100}
+          />
+          <input
+            type="number"
+            placeholder="Max %"
+            value={percentMax}
+            onChange={e => setPercentMax(e.target.value)}
+            className="border rounded px-2 py-1 w-20"
+            min={0}
+            max={100}
+          />
           <select value={sortField} onChange={e => setSortField(e.target.value as 'cust_surname' | 'cust_name')} className="border rounded px-2 py-1">
             <option value="cust_surname">Sort by Surname</option>
             <option value="cust_name">Sort by Name</option>
@@ -159,10 +179,15 @@ const CustomerCards = () => {
           {customerCards
             .filter(card => {
               const q = search.trim().toLowerCase();
+              const min = percentMin === "" ? -Infinity : parseInt(percentMin);
+              const max = percentMax === "" ? Infinity : parseInt(percentMax);
+              const percentOk = card.percent >= min && card.percent <= max;
               return (
-                !q ||
-                card.cust_surname.toLowerCase().includes(q) ||
-                card.cust_name.toLowerCase().includes(q)
+                percentOk &&
+                (!q ||
+                  card.cust_surname.toLowerCase().includes(q) ||
+                  card.cust_name.toLowerCase().includes(q)
+                )
               );
             })
             .sort((a, b) => {
