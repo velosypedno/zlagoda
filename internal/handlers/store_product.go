@@ -101,7 +101,7 @@ func NewStoreProductCreatePOSTHandler(service storeProductCreator) gin.HandlerFu
 		}
 
 		log.Printf("[StoreProductCreatePOST] Calling service.CreateStoreProduct with model: %+v", model)
-		
+
 		upc, err := service.CreateStoreProduct(model)
 		if err != nil {
 			log.Printf("[StoreProductCreatePOST] Service error: %v", err)

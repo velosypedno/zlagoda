@@ -1,14 +1,17 @@
-const Home = () => {
-  return (
-    <div className="min-h-screen flex items-center justify-center from-blue-100 via-white to-blue-200">
-      <div className="text-center px-6 py-10 bg-white shadow-xl rounded-lg">
-        <h1 className="text-4xl font-bold text-gray-800 mb-4">Welcome Home</h1>
-        <p className="text-lg text-gray-600">
-          This is the homepage of your beautiful React + Tailwind app.
-        </p>
-      </div>
-    </div>
-  );
-};
+import { Link } from "react-router-dom";
+
+const Home = () => (
+  <div className="p-8">
+    <h1 className="text-3xl font-bold mb-4">Welcome to Zlagoda</h1>
+    <nav className="space-y-2">
+      <Link to="/products" className="block text-blue-600 hover:underline">Products</Link>
+      <Link to="/store-products" className="block text-blue-600 hover:underline">Store Products</Link>
+      <Link to="/employees" className="block text-blue-600 hover:underline">Employees</Link>
+      <Link to="/customer-cards" className="block text-blue-600 hover:underline">Customer Cards</Link>
+      <Link to="/categories" className="block text-blue-600 hover:underline">Categories</Link>
+      <Link to="/create-check" className="block text-blue-600 hover:underline font-semibold">Create Check</Link>
+    </nav>
+  </div>
+);
 
 export default Home;

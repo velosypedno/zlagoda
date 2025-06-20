@@ -5,6 +5,7 @@ import EmployeesPage from "./pages/Employees";
 import CustomerCardsPage from "./pages/CustomerCards";
 import ProductsPage from "./pages/Products";
 import StoreProductsPage from "./pages/StoreProducts";
+import CreateCheck from "./pages/CreateCheck";
 import Navbar from "./components/Navbar";
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
           <Route path="/customer-cards" element={<CustomerCardsPage />} />
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/store-products" element={<StoreProductsPage />} />
+          <Route path="/create-check" element={<CreateCheck />} />
         </Routes>
       </div>
     </BrowserRouter>
