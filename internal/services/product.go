@@ -2,14 +2,21 @@ package services
 
 import (
 	"github.com/velosypedno/zlagoda/internal/models"
-	"github.com/velosypedno/zlagoda/internal/repos"
 )
 
-type ProductService struct {
-	repo repos.ProductRepo
+type ProductRepo interface {
+	CreateProduct(p models.ProductCreate) (int, error)
+	RetrieveProductByID(id int) (models.ProductRetrieve, error)
+	RetrieveProducts() ([]models.ProductRetrieve, error)
+	UpdateProduct(id int, p models.ProductUpdate) error
+	DeleteProduct(id int) error
 }
 
-func NewProductService(r repos.ProductRepo) *ProductService {
+type ProductService struct {
+	repo ProductRepo
+}
+
+func NewProductService(r ProductRepo) *ProductService {
 	return &ProductService{repo: r}
 }
 

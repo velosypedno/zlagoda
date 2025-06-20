@@ -16,18 +16,13 @@ type productCreator interface {
 func NewProductCreatePOSTHandler(service productCreator) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Printf("[ProductCreatePOST] Starting product creation request")
-		
+
 		var req struct {
+			CategoryID      int    `json:"category_id"     binding:"required"`
 			Name            string `json:"name"            binding:"required"`
 			Characteristics string `json:"characteristics" binding:"required"`
-			CategoryID      int    `json:"category_id"     binding:"required"`
 		}
-		
 		if err := c.ShouldBindJSON(&req); err != nil {
-			log.Printf("[ProductCreatePOST] BindJSON error: %v", err)
-			log.Printf("[ProductCreatePOST] Request validation failed: %+v", req)
-			log.Printf("[ProductCreatePOST] Content-Type: %s", c.GetHeader("Content-Type"))
-			log.Printf("[ProductCreatePOST] Content-Length: %s", c.GetHeader("Content-Length"))
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
 			return
 		}
@@ -58,13 +53,13 @@ func NewProductCreatePOSTHandler(service productCreator) gin.HandlerFunc {
 		}
 
 		model := models.ProductCreate{
+			CategoryID:      req.CategoryID,
 			Name:            req.Name,
 			Characteristics: req.Characteristics,
-			CategoryID:      req.CategoryID,
 		}
-		
+
 		log.Printf("[ProductCreatePOST] Calling service.CreateProduct with model: %+v", model)
-		
+
 		id, err := service.CreateProduct(model)
 		if err != nil {
 			log.Printf("[ProductCreatePOST] Service error: %v", err)
@@ -88,6 +83,13 @@ type productReader interface {
 
 func NewProductRetrieveGETHandler(service productReader) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		type response struct {
+			ID              int    `json:"product_id"`
+			CategoryID      int    `json:"category_id"`
+			Name            string `json:"name"`
+			Characteristics string `json:"characteristics"`
+		}
+
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			log.Printf("[ProductRetrieveGET] Invalid ID parameter: %v", err)
@@ -102,16 +104,25 @@ func NewProductRetrieveGETHandler(service productReader) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"id":              p.ID,
-			"name":            p.Name,
-			"characteristics": p.Characteristics,
-			"category_id":     p.CategoryID,
-		})
+		resp := response{
+			ID:              p.ID,
+			CategoryID:      p.CategoryID,
+			Name:            p.Name,
+			Characteristics: p.Characteristics,
+		}
+
+		c.JSON(http.StatusOK, resp)
 	}
 }
 
 func NewProductsListGETHandler(service productReader) gin.HandlerFunc {
+	type responseItem struct {
+		ID              int    `json:"product_id"`
+		CategoryID      int    `json:"category_id"`
+		Name            string `json:"name"`
+		Characteristics string `json:"characteristics"`
+	}
+
 	return func(c *gin.Context) {
 		items, err := service.GetProducts()
 		if err != nil {
@@ -120,13 +131,13 @@ func NewProductsListGETHandler(service productReader) gin.HandlerFunc {
 			return
 		}
 
-		resp := make([]gin.H, 0, len(items))
+		var resp []responseItem
 		for _, p := range items {
-			resp = append(resp, gin.H{
-				"id":              p.ID,
-				"name":            p.Name,
-				"characteristics": p.Characteristics,
-				"category_id":     p.CategoryID,
+			resp = append(resp, responseItem{
+				ID:              p.ID,
+				CategoryID:      p.CategoryID,
+				Name:            p.Name,
+				Characteristics: p.Characteristics,
 			})
 		}
 		c.JSON(http.StatusOK, resp)
@@ -206,9 +217,9 @@ func NewProductUpdatePATCHHandler(service productUpdater) gin.HandlerFunc {
 		}
 
 		var req struct {
+			CategoryID      *int    `json:"category_id"`
 			Name            *string `json:"name"`
 			Characteristics *string `json:"characteristics"`
-			CategoryID      *int    `json:"category_id"`
 		}
 		if err := c.ShouldBindJSON(&req); err != nil {
 			log.Printf("[ProductUpdatePATCH] BindJSON error for ID %d: %v", id, err)
@@ -217,9 +228,9 @@ func NewProductUpdatePATCHHandler(service productUpdater) gin.HandlerFunc {
 		}
 
 		model := models.ProductUpdate{
+			CategoryID:      req.CategoryID,
 			Name:            req.Name,
 			Characteristics: req.Characteristics,
-			CategoryID:      req.CategoryID,
 		}
 
 		if err := service.UpdateProduct(id, model); err != nil {

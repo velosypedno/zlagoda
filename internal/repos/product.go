@@ -8,25 +8,17 @@ import (
 	"github.com/velosypedno/zlagoda/internal/models"
 )
 
-type ProductRepo interface {
-	CreateProduct(p models.ProductCreate) (int, error)
-	RetrieveProductByID(id int) (models.ProductRetrieve, error)
-	RetrieveProducts() ([]models.ProductRetrieve, error)
-	RetrieveProductsByCategory(categoryID int) ([]models.ProductRetrieve, error)
-	RetrieveProductsByName(name string) ([]models.ProductRetrieve, error)
-	UpdateProduct(id int, p models.ProductUpdate) error
-	DeleteProduct(id int) error
-}
-
-type productRepo struct {
+type ProductRepo struct {
 	db *sql.DB
 }
 
-func NewProductRepo(db *sql.DB) ProductRepo {
-	return &productRepo{db: db}
+func NewProductRepo(db *sql.DB) *ProductRepo {
+	return &ProductRepo{
+		db: db,
+	}
 }
 
-func (r *productRepo) CreateProduct(p models.ProductCreate) (int, error) {
+func (r *ProductRepo) CreateProduct(p models.ProductCreate) (int, error) {
 	var id int
 	err := r.db.QueryRow(
 		`INSERT INTO product (product_name, characteristics, category_id)
@@ -37,7 +29,7 @@ func (r *productRepo) CreateProduct(p models.ProductCreate) (int, error) {
 	return id, err
 }
 
-func (r *productRepo) RetrieveProductByID(id int) (models.ProductRetrieve, error) {
+func (r *ProductRepo) RetrieveProductByID(id int) (models.ProductRetrieve, error) {
 	var pr models.ProductRetrieve
 	err := r.db.QueryRow(
 		`SELECT product_id, product_name, characteristics, category_id
@@ -48,7 +40,7 @@ func (r *productRepo) RetrieveProductByID(id int) (models.ProductRetrieve, error
 	return pr, err
 }
 
-func (r *productRepo) RetrieveProducts() ([]models.ProductRetrieve, error) {
+func (r *ProductRepo) RetrieveProducts() ([]models.ProductRetrieve, error) {
 	rows, err := r.db.Query(
 		`SELECT product_id, product_name, characteristics, category_id
 		 FROM product`,
@@ -145,7 +137,7 @@ func (r *productRepo) UpdateProduct(id int, p models.ProductUpdate) error {
 	return err
 }
 
-func (r *productRepo) DeleteProduct(id int) error {
+func (r *ProductRepo) DeleteProduct(id int) error {
 	_, err := r.db.Exec(`DELETE FROM product WHERE product_id = $1`, id)
 	return err
 }

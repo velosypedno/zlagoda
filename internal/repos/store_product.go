@@ -6,7 +6,31 @@ import (
 	"strings"
 
 	"github.com/velosypedno/zlagoda/internal/models"
+	"github.com/velosypedno/zlagoda/internal/utils"
 )
+
+func getNewStoreProductUPC(r *StoreProductRepo) (string, error) {
+	const maxRetries = 10
+
+	for i := 0; i < maxRetries; i++ {
+		upc, err := utils.GenerateUPC(12)
+		if err != nil {
+			return "", fmt.Errorf("failed to generate store product UPC: %w", err)
+		}
+
+		var exists bool
+		err = r.db.QueryRow("SELECT EXISTS(SELECT 1 FROM store_product WHERE upc = $1)", upc).Scan(&exists)
+		if err != nil {
+			return "", fmt.Errorf("failed to check store product UPC uniqueness: %w", err)
+		}
+
+		if !exists {
+			return upc, nil
+		}
+	}
+
+	return "", fmt.Errorf("failed to generate unique store product UPC after %d attempts", maxRetries)
+}
 
 type StoreProductRepo struct {
 	db *sql.DB
@@ -31,10 +55,13 @@ func (r *StoreProductRepo) CreateStoreProduct(sp models.StoreProductCreate) (str
 		RETURNING upc
 	`
 
-	var upc string
-	err := r.db.QueryRow(
+	upc, err := getNewStoreProductUPC(r)
+	if err != nil {
+		return "", err
+	}
+	err = r.db.QueryRow(
 		query,
-		sp.UPC,
+		upc,
 		sp.UPCProm,
 		sp.ProductID,
 		sp.SellingPrice,
@@ -277,7 +304,7 @@ func (r *StoreProductRepo) UpdateStoreProduct(upc string, sp models.StoreProduct
 	}
 
 	if len(setParts) == 0 {
-		return nil // Nothing to update
+		return nil
 	}
 
 	query := fmt.Sprintf(`

@@ -17,17 +17,16 @@ type storeProductCreator interface {
 func NewStoreProductCreatePOSTHandler(service storeProductCreator) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Printf("[StoreProductCreatePOST] Starting store product creation request")
-		
+
 		type request struct {
-			UPC                string  `json:"upc" binding:"required,len=12"`
-			UPCProm            *string `json:"upc_prom" binding:"omitempty"`
-			ProductID          int     `json:"product_id" binding:"required"`
+			UPCProm            *string `json:"upc_prom" binding:"omitempty,len=12"`
+			ProductID          int     `json:"product_id" binding:"required,gte=1"`
 			SellingPrice       float64 `json:"selling_price" binding:"required,gte=0"`
 			ProductsNumber     int     `json:"products_number" binding:"required,gte=0"`
 			PromotionalProduct bool    `json:"promotional_product"`
 		}
 		var req request
-		
+
 		if err := c.ShouldBindJSON(&req); err != nil {
 			log.Printf("[StoreProductCreatePOST] BindJSON error: %v", err)
 			log.Printf("[StoreProductCreatePOST] Request validation failed: %+v", req)
@@ -37,62 +36,23 @@ func NewStoreProductCreatePOSTHandler(service storeProductCreator) gin.HandlerFu
 			return
 		}
 
-		// Handle empty string for UPCProm - convert to null
-		if req.UPCProm != nil && *req.UPCProm == "" {
-			log.Printf("[StoreProductCreatePOST] Converting empty UPCProm to null")
-			req.UPCProm = nil
-		}
-
 		// Log the parsed request data
-		log.Printf("[StoreProductCreatePOST] Parsed request data: UPC=%s, ProductID=%d, SellingPrice=%f, ProductsNumber=%d, PromotionalProduct=%t", 
-			req.UPC, req.ProductID, req.SellingPrice, req.ProductsNumber, req.PromotionalProduct)
+		log.Printf("[StoreProductCreatePOST] Parsed request data: ProductID=%d, SellingPrice=%f, ProductsNumber=%d, PromotionalProduct=%t",
+			req.ProductID, req.SellingPrice, req.ProductsNumber, req.PromotionalProduct)
 		if req.UPCProm != nil {
 			log.Printf("[StoreProductCreatePOST] Promotional UPC: %s", *req.UPCProm)
 		}
-
-		// Validate UPC format
-		if len(req.UPC) != 12 {
-			log.Printf("[StoreProductCreatePOST] Invalid UPC length: %d (expected 12)", len(req.UPC))
-			c.JSON(http.StatusBadRequest, gin.H{"error": "UPC must be exactly 12 characters"})
+		if req.PromotionalProduct && req.UPCProm != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: promotional product can not have a promotion"})
 			return
 		}
-
-		// Validate promotional UPC if provided
-		if req.UPCProm != nil && len(*req.UPCProm) != 12 {
-			log.Printf("[StoreProductCreatePOST] Invalid promotional UPC length: %d (expected 12)", len(*req.UPCProm))
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Promotional UPC must be exactly 12 characters"})
-			return
-		}
-
-		// Validate product ID
-		if req.ProductID <= 0 {
-			log.Printf("[StoreProductCreatePOST] Invalid product ID: %d (must be positive)", req.ProductID)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Product ID must be a positive integer"})
-			return
-		}
-
-		// Validate selling price
-		if req.SellingPrice < 0 {
-			log.Printf("[StoreProductCreatePOST] Invalid selling price: %f (must be non-negative)", req.SellingPrice)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Selling price must be non-negative"})
-			return
-		}
-
-		if !utils.IsAmountValid(req.SellingPrice) {
+		if !utils.IsDecimalValid(req.SellingPrice) {
 			log.Printf("[StoreProductCreatePOST] Invalid selling price format: %v", req.SellingPrice)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid selling price"})
 			return
 		}
 
-		// Validate products number
-		if req.ProductsNumber < 0 {
-			log.Printf("[StoreProductCreatePOST] Invalid products number: %d (must be non-negative)", req.ProductsNumber)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Products number must be non-negative"})
-			return
-		}
-
 		model := models.StoreProductCreate{
-			UPC:                req.UPC,
 			UPCProm:            req.UPCProm,
 			ProductID:          req.ProductID,
 			SellingPrice:       req.SellingPrice,
@@ -105,7 +65,7 @@ func NewStoreProductCreatePOSTHandler(service storeProductCreator) gin.HandlerFu
 		upc, err := service.CreateStoreProduct(model)
 		if err != nil {
 			log.Printf("[StoreProductCreatePOST] Service error: %v", err)
-			log.Printf("[StoreProductCreatePOST] Service error details - UPC: %s, ProductID: %d, Error: %s", 
+			log.Printf("[StoreProductCreatePOST] Service error details - UPC: %s, ProductID: %d, Error: %s",
 				req.UPC, req.ProductID, err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create store product: " + err.Error()})
 			return
@@ -343,8 +303,8 @@ func NewStoreProductUpdatePATCHHandler(service storeProductUpdater) gin.HandlerF
 		}
 
 		type request struct {
-			UPCProm            *string  `json:"upc_prom" binding:"omitempty"`
-			ProductID          *int     `json:"product_id"`
+			UPCProm            *string  `json:"upc_prom" binding:"omitempty,len=12"`
+			ProductID          *int     `json:"product_id" binding:"omitempty,gte=1"`
 			SellingPrice       *float64 `json:"selling_price" binding:"omitempty,gte=0"`
 			ProductsNumber     *int     `json:"products_number" binding:"omitempty,gte=0"`
 			PromotionalProduct *bool    `json:"promotional_product"`
@@ -356,28 +316,26 @@ func NewStoreProductUpdatePATCHHandler(service storeProductUpdater) gin.HandlerF
 			return
 		}
 
-		// Handle empty string for UPCProm - convert to null
-		if req.UPCProm != nil && *req.UPCProm == "" {
-			log.Printf("[StoreProductUpdatePATCH] Converting empty UPCProm to null for UPC %s", upc)
-			req.UPCProm = nil
-		}
-
-		// Check if store product exists
-		_, err := service.GetStoreProductByUPC(upc)
+		storeProductCorrentState, err := service.GetStoreProductByUPC(upc)
 		if err != nil {
 			log.Printf("[StoreProductUpdatePATCH] Store product not found for UPC %s: %v", upc, err)
 			c.JSON(http.StatusNotFound, gin.H{"error": "Store product not found: " + err.Error()})
 			return
 		}
 
-		// Validate promotional UPC if provided
-		if req.UPCProm != nil && len(*req.UPCProm) != 12 {
-			log.Printf("[StoreProductUpdatePATCH] Invalid promotional UPC length for UPC %s: %d (expected 12)", upc, len(*req.UPCProm))
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Promotional UPC must be exactly 12 characters"})
-			return
+		if (req.PromotionalProduct != nil && *req.PromotionalProduct) || storeProductCorrentState.PromotionalProduct {
+			if storeProductCorrentState.UPCProm != nil || req.UPCProm != nil {
+				log.Printf("[StoreProductUpdatePATCH] promotional product can not have a promotion %s: ", upc)
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: promotional product can not have a promotion"})
+				return
+			}
+			if req.SellingPrice != nil {
+				log.Printf("[StoreProductUpdatePATCH] promotional product selling price is fixed %s: ", upc)
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: promotional product selling price is fixed"})
+				return
+			}
 		}
-
-		if req.SellingPrice != nil && !utils.IsAmountValid(*req.SellingPrice) {
+		if req.SellingPrice != nil && !utils.IsDecimalValid(*req.SellingPrice) {
 			log.Printf("[StoreProductUpdatePATCH] Invalid selling price for UPC %s: %v", upc, *req.SellingPrice)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid selling price"})
 			return
