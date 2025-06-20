@@ -14,13 +14,10 @@ type CheckService interface {
 	CreateCheck(req models.CheckCreate, vatRate float64) (*models.CheckCreateResponse, error)
 }
 
-<<<<<<< HEAD
-=======
 type checkReader interface {
 	GetChecks() ([]models.ReceiptRetrieve, error)
 }
 
->>>>>>> feature/check
 func NewCheckCreatePOSTHandler(service CheckService, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req models.CheckCreate
@@ -44,8 +41,6 @@ func NewCheckCreatePOSTHandler(service CheckService, cfg *config.Config) gin.Han
 		}
 		c.JSON(http.StatusCreated, resp)
 	}
-<<<<<<< HEAD
-=======
 }
 
 func NewChecksListGETHandler(service checkReader) gin.HandlerFunc {
@@ -112,12 +107,11 @@ func NewCheckRetrieveGETHandler(service checkReader) gin.HandlerFunc {
 		}
 		c.JSON(200, gin.H{
 			"receipt_number": found.ReceiptNumber,
-			"employee_id": found.EmployeeId,
-			"card_number": found.CardNumber,
-			"print_date": printDate,
-			"sum_total": found.TotalSum,
-			"vat": found.VAT,
+			"employee_id":    found.EmployeeId,
+			"card_number":    found.CardNumber,
+			"print_date":     printDate,
+			"sum_total":      found.TotalSum,
+			"vat":            found.VAT,
 		})
 	}
->>>>>>> feature/check
-} 
+}

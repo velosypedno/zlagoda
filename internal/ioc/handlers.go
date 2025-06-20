@@ -40,13 +40,13 @@ type HandlerContainer struct {
 	ReceiptDeleteDELETEHandler gin.HandlerFunc
 	ReceiptUpdatePATCHHandler  gin.HandlerFunc
 
-	ProductCreatePOSTHandler   gin.HandlerFunc
-	ProductRetrieveGETHandler  gin.HandlerFunc
-	ProductsListGETHandler     gin.HandlerFunc
+	ProductCreatePOSTHandler     gin.HandlerFunc
+	ProductRetrieveGETHandler    gin.HandlerFunc
+	ProductsListGETHandler       gin.HandlerFunc
 	ProductsByCategoryGETHandler gin.HandlerFunc
-	ProductsByNameGETHandler   gin.HandlerFunc
-	ProductDeleteDELETEHandler gin.HandlerFunc
-	ProductUpdatePATCHHandler  gin.HandlerFunc
+	ProductsByNameGETHandler     gin.HandlerFunc
+	ProductDeleteDELETEHandler   gin.HandlerFunc
+	ProductUpdatePATCHHandler    gin.HandlerFunc
 
 	StoreProductCreatePOSTHandler          gin.HandlerFunc
 	StoreProductRetrieveGETHandler         gin.HandlerFunc
@@ -60,7 +60,7 @@ type HandlerContainer struct {
 	StoreProductDeleteDELETEHandler        gin.HandlerFunc
 	StoreProductQuantityUpdatePATCHHandler gin.HandlerFunc
 	StoreProductStockCheckGETHandler       gin.HandlerFunc
-	StoreProductDeliveryPATCHHandler         gin.HandlerFunc
+	StoreProductDeliveryPATCHHandler       gin.HandlerFunc
 
 	SaleCreatePOSTHandler               gin.HandlerFunc
 	SaleRetrieveGETHandler              gin.HandlerFunc
@@ -75,12 +75,9 @@ type HandlerContainer struct {
 	ReceiptTotalGETHandler              gin.HandlerFunc
 	SalesStatsByProductGETHandler       gin.HandlerFunc
 	TopSellingProductsGETHandler        gin.HandlerFunc
-	CheckCreatePOSTHandler gin.HandlerFunc
-<<<<<<< HEAD
-=======
-	ChecksListGETHandler gin.HandlerFunc
-	CheckRetrieveGETHandler gin.HandlerFunc
->>>>>>> feature/check
+	CheckCreatePOSTHandler              gin.HandlerFunc
+	ChecksListGETHandler                gin.HandlerFunc
+	CheckRetrieveGETHandler             gin.HandlerFunc
 }
 
 // Close properly closes the database connection
@@ -161,27 +158,27 @@ func BuildHandlerContainer(c *config.Config) (*HandlerContainer, error) {
 		ReceiptDeleteDELETEHandler: handlers.NewReceiptDeleteDELETEHandler(receiptService),
 		ReceiptUpdatePATCHHandler:  handlers.NewReceiptUpdatePATCHHandler(receiptService, c),
 
-		ProductCreatePOSTHandler:   handlers.NewProductCreatePOSTHandler(productService),
-		ProductRetrieveGETHandler:  handlers.NewProductRetrieveGETHandler(productService),
-		ProductsListGETHandler:     handlers.NewProductsListGETHandler(productService),
+		ProductCreatePOSTHandler:     handlers.NewProductCreatePOSTHandler(productService),
+		ProductRetrieveGETHandler:    handlers.NewProductRetrieveGETHandler(productService),
+		ProductsListGETHandler:       handlers.NewProductsListGETHandler(productService),
 		ProductsByCategoryGETHandler: handlers.NewProductsByCategoryGETHandler(productService),
-		ProductsByNameGETHandler:    handlers.NewProductsByNameGETHandler(productService),
-		ProductDeleteDELETEHandler: handlers.NewProductDeleteDELETEHandler(productService),
-		ProductUpdatePATCHHandler:  handlers.NewProductUpdatePATCHHandler(productService),
+		ProductsByNameGETHandler:     handlers.NewProductsByNameGETHandler(productService),
+		ProductDeleteDELETEHandler:   handlers.NewProductDeleteDELETEHandler(productService),
+		ProductUpdatePATCHHandler:    handlers.NewProductUpdatePATCHHandler(productService),
 
 		StoreProductCreatePOSTHandler:          handlers.NewStoreProductCreatePOSTHandler(storeProductService),
 		StoreProductRetrieveGETHandler:         handlers.NewStoreProductRetrieveGETHandler(storeProductService),
 		StoreProductsListGETHandler:            handlers.NewStoreProductsListGETHandler(storeProductService),
 		StoreProductsWithDetailsListGETHandler: handlers.NewStoreProductsWithDetailsListGETHandler(storeProductService),
 		StoreProductsByProductIDGETHandler:     handlers.NewStoreProductsByProductIDGETHandler(storeProductService),
-		StoreProductsByCategoryGETHandler:       handlers.NewStoreProductsByCategoryGETHandler(storeProductService),
-		StoreProductsByNameGETHandler:            handlers.NewStoreProductsByNameGETHandler(storeProductService),
+		StoreProductsByCategoryGETHandler:      handlers.NewStoreProductsByCategoryGETHandler(storeProductService),
+		StoreProductsByNameGETHandler:          handlers.NewStoreProductsByNameGETHandler(storeProductService),
 		PromotionalProductsGETHandler:          handlers.NewPromotionalProductsGETHandler(storeProductService),
 		StoreProductUpdatePATCHHandler:         handlers.NewStoreProductUpdatePATCHHandler(storeProductService),
 		StoreProductDeleteDELETEHandler:        handlers.NewStoreProductDeleteDELETEHandler(storeProductService),
 		StoreProductQuantityUpdatePATCHHandler: handlers.NewStoreProductQuantityUpdatePATCHHandler(storeProductService),
 		StoreProductStockCheckGETHandler:       handlers.NewStoreProductStockCheckGETHandler(storeProductService),
-		StoreProductDeliveryPATCHHandler:         handlers.NewStoreProductDeliveryPATCHHandler(storeProductService),
+		StoreProductDeliveryPATCHHandler:       handlers.NewStoreProductDeliveryPATCHHandler(storeProductService),
 
 		SaleCreatePOSTHandler:               handlers.NewSaleCreatePOSTHandler(saleService),
 		SaleRetrieveGETHandler:              handlers.NewSaleRetrieveGETHandler(saleService),
@@ -196,11 +193,8 @@ func BuildHandlerContainer(c *config.Config) (*HandlerContainer, error) {
 		ReceiptTotalGETHandler:              handlers.NewReceiptTotalGETHandler(saleService),
 		SalesStatsByProductGETHandler:       handlers.NewSalesStatsByProductGETHandler(saleService),
 		TopSellingProductsGETHandler:        handlers.NewTopSellingProductsGETHandler(saleService),
-		CheckCreatePOSTHandler: handlers.NewCheckCreatePOSTHandler(checkService, c),
-<<<<<<< HEAD
-=======
-		ChecksListGETHandler: handlers.NewChecksListGETHandler(checkService),
-		CheckRetrieveGETHandler: handlers.NewCheckRetrieveGETHandler(checkService),
->>>>>>> feature/check
+		CheckCreatePOSTHandler:              handlers.NewCheckCreatePOSTHandler(checkService, c),
+		ChecksListGETHandler:                handlers.NewChecksListGETHandler(checkService),
+		CheckRetrieveGETHandler:             handlers.NewCheckRetrieveGETHandler(checkService),
 	}, nil
 }
