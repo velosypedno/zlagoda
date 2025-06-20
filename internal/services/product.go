@@ -7,6 +7,8 @@ import (
 type ProductRepo interface {
 	CreateProduct(p models.ProductCreate) (int, error)
 	RetrieveProductByID(id int) (models.ProductRetrieve, error)
+	RetrieveProductsByCategory(categoryID int) ([]models.ProductRetrieve, error)
+	RetrieveProductsByName(name string) ([]models.ProductRetrieve, error)
 	RetrieveProducts() ([]models.ProductRetrieve, error)
 	UpdateProduct(id int, p models.ProductUpdate) error
 	DeleteProduct(id int) error

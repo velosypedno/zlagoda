@@ -65,8 +65,7 @@ func NewStoreProductCreatePOSTHandler(service storeProductCreator) gin.HandlerFu
 		upc, err := service.CreateStoreProduct(model)
 		if err != nil {
 			log.Printf("[StoreProductCreatePOST] Service error: %v", err)
-			log.Printf("[StoreProductCreatePOST] Service error details - UPC: %s, ProductID: %d, Error: %s",
-				req.UPC, req.ProductID, err.Error())
+			log.Printf("[StoreProductCreatePOST] Service error details - ProductID: %d, Error: %s", req.ProductID, err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create store product: " + err.Error()})
 			return
 		}
@@ -481,7 +480,7 @@ func NewStoreProductDeliveryPATCHHandler(service storeProductDeliveryUpdater) gi
 			return
 		}
 
-		if req.NewPrice != nil && !utils.IsAmountValid(*req.NewPrice) {
+		if req.NewPrice != nil && !utils.IsDecimalValid(*req.NewPrice) {
 			log.Printf("[StoreProductDeliveryPATCH] Invalid new price for UPC %s: %v", upc, *req.NewPrice)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid new price"})
 			return

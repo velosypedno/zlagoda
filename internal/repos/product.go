@@ -61,7 +61,7 @@ func (r *ProductRepo) RetrieveProducts() ([]models.ProductRetrieve, error) {
 	return list, rows.Err()
 }
 
-func (r *productRepo) RetrieveProductsByCategory(categoryID int) ([]models.ProductRetrieve, error) {
+func (r *ProductRepo) RetrieveProductsByCategory(categoryID int) ([]models.ProductRetrieve, error) {
 	rows, err := r.db.Query(
 		`SELECT product_id, product_name, characteristics, category_id
 		 FROM product
@@ -84,7 +84,7 @@ func (r *productRepo) RetrieveProductsByCategory(categoryID int) ([]models.Produ
 	return list, rows.Err()
 }
 
-func (r *productRepo) RetrieveProductsByName(name string) ([]models.ProductRetrieve, error) {
+func (r *ProductRepo) RetrieveProductsByName(name string) ([]models.ProductRetrieve, error) {
 	rows, err := r.db.Query(
 		`SELECT product_id, product_name, characteristics, category_id
 		 FROM product
@@ -107,7 +107,7 @@ func (r *productRepo) RetrieveProductsByName(name string) ([]models.ProductRetri
 	return list, rows.Err()
 }
 
-func (r *productRepo) UpdateProduct(id int, p models.ProductUpdate) error {
+func (r *ProductRepo) UpdateProduct(id int, p models.ProductUpdate) error {
 	set, args, idx := []string{}, []interface{}{}, 1
 
 	if p.Name != nil {

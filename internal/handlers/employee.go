@@ -307,7 +307,7 @@ func NewEmployeeUpdatePATCHHandler(service employeeUpdater) gin.HandlerFunc {
 			return
 		}
 
-		if !utils.IsSalaryValid(*req.Salary) {
+		if !utils.IsDecimalValid(*req.Salary) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid salary"})
 			return
 		}

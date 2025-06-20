@@ -3,6 +3,7 @@ package repos
 import (
 	"database/sql"
 	"fmt"
+
 	"github.com/velosypedno/zlagoda/internal/models"
 	"github.com/velosypedno/zlagoda/internal/utils"
 )
@@ -23,7 +24,7 @@ func (r *CheckRepoImpl) BeginTx() (*sql.Tx, error) {
 func getNewCheckReceiptNumber(tx *sql.Tx) (string, error) {
 	const maxRetries = 10
 	for i := 0; i < maxRetries; i++ {
-		receiptNumber, err := utils.GenerateSecureID(10)
+		receiptNumber, err := utils.GenerateID(10)
 		if err != nil {
 			return "", err
 		}
@@ -76,4 +77,4 @@ func (r *CheckRepoImpl) GetStoreProductStockTx(tx *sql.Tx, upc string) (int, err
 	var stock int
 	err := tx.QueryRow(query, upc).Scan(&stock)
 	return stock, err
-} 
+}
