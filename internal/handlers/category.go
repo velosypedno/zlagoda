@@ -31,7 +31,7 @@ func NewCategoryCreatePOSTHandler(service categoryCreator) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusCreated, gin.H{"id": id})
+		c.JSON(http.StatusCreated, gin.H{"id": id, "name": req.Name})
 	}
 }
 

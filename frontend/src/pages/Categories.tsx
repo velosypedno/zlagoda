@@ -60,7 +60,6 @@ const CategoriesPage = () => {
       setCategories((prev) => [...prev, res.data]);
       setNewName("");
       setError(null);
-      await loadCategories();
     } catch {
       setError("Failed to create category");
     }
@@ -74,7 +73,6 @@ const CategoriesPage = () => {
           entityType="Categories"
           apiEndpoint="/api/categories"
           title="Categories Report"
-          filename="categories-export.pdf"
           columns={[
             { key: "id", label: "ID", width: "20%" },
             { key: "name", label: "Category Name", width: "80%" },
