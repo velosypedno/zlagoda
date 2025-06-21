@@ -89,7 +89,7 @@ const EmployeesPage = () => {
   };
 
   const handleNewChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
+    const { name, value } = e.target;
     setNewEmployee({
       ...newEmployee,
       [name]: name === "salary" ? Number(value) : value,

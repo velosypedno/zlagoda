@@ -8,7 +8,11 @@ import StoreProductsPage from "./pages/StoreProducts";
 import CreateCheck from "./pages/CreateCheck";
 import Checks from "./pages/Checks";
 import CheckDetails from "./pages/CheckDetails";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Account from "./pages/Account";
 import Navbar from "./components/Navbar";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
@@ -16,15 +20,18 @@ function App() {
       <Navbar />
       <div className="pt-16">
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/categories" element={<CategoriesPage />} />
-          <Route path="/employees" element={<EmployeesPage />} />
-          <Route path="/customer-cards" element={<CustomerCardsPage />} />
-          <Route path="/products" element={<ProductsPage />} />
-          <Route path="/store-products" element={<StoreProductsPage />} />
-          <Route path="/create-check" element={<CreateCheck />} />
-          <Route path="/checks" element={<Checks />} />
-          <Route path="/checks/:receipt_number" element={<CheckDetails />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+          <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+          <Route path="/categories" element={<ProtectedRoute><CategoriesPage /></ProtectedRoute>} />
+          <Route path="/employees" element={<ProtectedRoute><EmployeesPage /></ProtectedRoute>} />
+          <Route path="/customer-cards" element={<ProtectedRoute><CustomerCardsPage /></ProtectedRoute>} />
+          <Route path="/products" element={<ProtectedRoute><ProductsPage /></ProtectedRoute>} />
+          <Route path="/store-products" element={<ProtectedRoute><StoreProductsPage /></ProtectedRoute>} />
+          <Route path="/create-check" element={<ProtectedRoute><CreateCheck /></ProtectedRoute>} />
+          <Route path="/checks" element={<ProtectedRoute><Checks /></ProtectedRoute>} />
+          <Route path="/checks/:receipt_number" element={<ProtectedRoute><CheckDetails /></ProtectedRoute>} />
         </Routes>
       </div>
     </BrowserRouter>

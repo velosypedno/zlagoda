@@ -23,7 +23,7 @@ func main() {
 		}
 	}()
 
-	router := server.SetupRoutes(handlerContainer)
+	router := server.SetupRoutes(handlerContainer, cfg)
 
 	// Setup graceful shutdown
 	go func() {

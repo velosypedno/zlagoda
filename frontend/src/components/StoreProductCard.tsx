@@ -6,7 +6,6 @@ interface StoreProductCardProps {
   storeProduct: StoreProductWithDetails;
   onEdit: (storeProduct: StoreProductWithDetails) => void;
   onDelete: (upc: string) => void;
-  onUpdateQuantity: (upc: string, quantityChange: number) => void;
   onDeliveryUpdate: () => void;
 }
 
@@ -14,7 +13,6 @@ const StoreProductCard = ({
   storeProduct, 
   onEdit, 
   onDelete, 
-  onUpdateQuantity,
   onDeliveryUpdate
 }: StoreProductCardProps) => {
   const [isDeleting, setIsDeleting] = useState(false);

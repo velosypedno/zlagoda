@@ -16,6 +16,10 @@ import (
 type HandlerContainer struct {
 	DB *sql.DB
 
+	LoginPOSTHandler    gin.HandlerFunc
+	RegisterPOSTHandler gin.HandlerFunc
+	AccountGETHandler   gin.HandlerFunc
+
 	CategoryCreatePOSTHandler   gin.HandlerFunc
 	CategoryRetrieveGETHandler  gin.HandlerFunc
 	CategoriesListGETHandler    gin.HandlerFunc
@@ -131,8 +135,16 @@ func BuildHandlerContainer(c *config.Config) (*HandlerContainer, error) {
 	checkRepo := repos.NewCheckRepo(db)
 	checkService := services.NewCheckService(checkRepo)
 
+	loginService := services.NewLoginService(employeeRepo, c)
+	registerService := services.NewRegisterService(employeeRepo, c)
+	accountService := services.NewAccountService(employeeRepo)
+
 	return &HandlerContainer{
 		DB: db,
+
+		LoginPOSTHandler:    handlers.NewLoginPOSTHandler(loginService),
+		RegisterPOSTHandler: handlers.NewRegisterPOSTHandler(registerService),
+		AccountGETHandler:   handlers.NewAccountGETHandler(accountService),
 
 		CategoryCreatePOSTHandler:   handlers.NewCategoryCreatePOSTHandler(categoryService),
 		CategoryRetrieveGETHandler:  handlers.NewCategoryRetrieveGETHandler(categoryService),
