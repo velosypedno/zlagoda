@@ -145,6 +145,9 @@ func BuildHandlerContainer(c *config.Config) (*HandlerContainer, error) {
 	registerService := services.NewRegisterService(employeeRepo, c)
 	accountService := services.NewAccountService(employeeRepo)
 
+	individualsRepo := repos.NewIndividualsRepo(db)
+	individualsService := services.NewIndividualsService(individualsRepo)
+
 	return &HandlerContainer{
 		DB: db,
 
@@ -213,5 +216,12 @@ func BuildHandlerContainer(c *config.Config) (*HandlerContainer, error) {
 		ReceiptTotalGETHandler:              handlers.NewReceiptTotalGETHandler(saleService),
 		SalesStatsByProductGETHandler:       handlers.NewSalesStatsByProductGETHandler(saleService),
 		TopSellingProductsGETHandler:        handlers.NewTopSellingProductsGETHandler(saleService),
+
+		Vlad1GETHandler:    handlers.NewVlad1GETHandler(individualsService),
+		Vlad2GETHandler:    handlers.NewVlad2GETHandler(individualsService),
+		Arthur1GETHandler:  handlers.NewArthur1GETHandler(individualsService),
+		Arthur2GETHandler:  handlers.NewArthur2GETHandler(individualsService),
+		Oleksii1GETHandler: handlers.NewOleksii1GETHandler(individualsService),
+		Oleksii2GETHandler: handlers.NewOleksii2GETHandler(individualsService),
 	}, nil
 }

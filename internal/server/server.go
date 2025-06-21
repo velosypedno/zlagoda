@@ -92,7 +92,7 @@ func SetupRoutes(c *ioc.HandlerContainer, cfg *config.Config) *gin.Engine {
 		api.GET("/receipts/:receipt_number/total", c.ReceiptTotalGETHandler)
 
 		api.GET("/vlad1", c.Vlad1GETHandler)
-		api.GET("/vlad2", c.Vlad1GETHandler)
+		api.GET("/vlad2", c.Vlad2GETHandler)
 		api.GET("/arthur1", c.Arthur1GETHandler)
 		api.GET("/arthur2", c.Arthur2GETHandler)
 		api.GET("/oleksii1", c.Oleksii1GETHandler)
