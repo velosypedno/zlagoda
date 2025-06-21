@@ -4,13 +4,14 @@ import type { Employee } from "../types/employee";
 import { Link } from "react-router-dom";
 import { fetchReceipts } from "../api/receipts";
 import { fetchEmployees } from "../api/employees";
+import ExportPdfButton from "../components/ExportPdfButton";
 
 const Receipts: React.FC = () => {
   const [receipts, setReceipts] = useState<ReceiptRetrieve[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Filter states
   const [filterToday, setFilterToday] = useState(false);
   const [filterCashier, setFilterCashier] = useState<string>("");
@@ -21,7 +22,7 @@ const Receipts: React.FC = () => {
     setLoading(true);
     Promise.all([
       fetchReceipts().then((res) => res.data),
-      fetchEmployees().then((res) => res.data)
+      fetchEmployees().then((res) => res.data),
     ])
       .then(([receiptsData, employeesData]) => {
         setReceipts(receiptsData);
@@ -29,7 +30,9 @@ const Receipts: React.FC = () => {
         setError(null);
       })
       .catch((err) => {
-        setError(err?.response?.data?.error || err.message || "Failed to load data");
+        setError(
+          err?.response?.data?.error || err.message || "Failed to load data",
+        );
       })
       .finally(() => setLoading(false));
   }, []);
@@ -37,7 +40,7 @@ const Receipts: React.FC = () => {
   // Get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
     const today = new Date();
-    return today.toISOString().split('T')[0];
+    return today.toISOString().split("T")[0];
   };
 
   // Filter receipts based on current filter states
@@ -65,7 +68,7 @@ const Receipts: React.FC = () => {
 
   // Get cashier name by employee ID
   const getCashierName = (employeeId: string) => {
-    const employee = employees.find(emp => emp.employee_id === employeeId);
+    const employee = employees.find((emp) => emp.employee_id === employeeId);
     if (!employee) return employeeId;
     return `${employee.empl_surname} ${employee.empl_name} ${employee.empl_patronymic || ""}`.trim();
   };
@@ -82,7 +85,28 @@ const Receipts: React.FC = () => {
     <div className="max-w-6xl mx-auto p-6 bg-white rounded shadow">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Receipts</h1>
-        <Link to="/create-receipt" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Create Receipt</Link>
+        <div className="flex gap-2">
+          <ExportPdfButton
+            entityType="Receipts"
+            apiEndpoint="/api/receipts"
+            title="Receipts Report"
+            filename="receipts-export.pdf"
+            columns={[
+              { key: "receipt_number", label: "Receipt #", width: "15%" },
+              { key: "employee_id", label: "Cashier ID", width: "15%" },
+              { key: "card_number", label: "Card #", width: "15%" },
+              { key: "print_date", label: "Date", width: "15%" },
+              { key: "sum_total", label: "Total", width: "12%" },
+              { key: "vat", label: "VAT", width: "13%" },
+            ]}
+          />
+          <Link
+            to="/create-receipt"
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Create Receipt
+          </Link>
+        </div>
       </div>
 
       {/* Filters Section */}
@@ -113,10 +137,11 @@ const Receipts: React.FC = () => {
             >
               <option value="">All cashiers</option>
               {employees
-                .filter(emp => emp.empl_role === "Cashier")
+                .filter((emp) => emp.empl_role === "Cashier")
                 .map((emp) => (
                   <option key={emp.employee_id} value={emp.employee_id}>
-                    {emp.empl_surname} {emp.empl_name} {emp.empl_patronymic || ""}
+                    {emp.empl_surname} {emp.empl_name}{" "}
+                    {emp.empl_patronymic || ""}
                   </option>
                 ))}
             </select>
@@ -159,7 +184,9 @@ const Receipts: React.FC = () => {
       </div>
 
       {loading && <div>Loading...</div>}
-      {error && <div className="bg-red-100 text-red-700 p-2 mb-2 rounded">{error}</div>}
+      {error && (
+        <div className="bg-red-100 text-red-700 p-2 mb-2 rounded">{error}</div>
+      )}
       {!loading && !error && (
         <div className="overflow-x-auto">
           <table className="min-w-full border">
@@ -177,24 +204,43 @@ const Receipts: React.FC = () => {
             <tbody>
               {filteredReceipts.map((receipt) => (
                 <tr key={receipt.receipt_number} className="hover:bg-gray-50">
-                  <td className="px-3 py-2 border font-mono">{receipt.receipt_number}</td>
-                  <td className="px-3 py-2 border">
-                    <div className="font-medium">{getCashierName(receipt.employee_id)}</div>
-                    <div className="text-xs text-gray-500">ID: {receipt.employee_id}</div>
+                  <td className="px-3 py-2 border font-mono">
+                    {receipt.receipt_number}
                   </td>
-                  <td className="px-3 py-2 border">{receipt.card_number || <span className="text-gray-400">—</span>}</td>
+                  <td className="px-3 py-2 border">
+                    <div className="font-medium">
+                      {getCashierName(receipt.employee_id)}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      ID: {receipt.employee_id}
+                    </div>
+                  </td>
+                  <td className="px-3 py-2 border">
+                    {receipt.card_number || (
+                      <span className="text-gray-400">—</span>
+                    )}
+                  </td>
                   <td className="px-3 py-2 border">{receipt.print_date}</td>
-                  <td className="px-3 py-2 border">{receipt.sum_total.toFixed(2)}</td>
+                  <td className="px-3 py-2 border">
+                    {receipt.sum_total.toFixed(2)}
+                  </td>
                   <td className="px-3 py-2 border">{receipt.vat.toFixed(2)}</td>
                   <td className="px-3 py-2 border">
-                    <Link to={`/receipts/${receipt.receipt_number}`} className="text-blue-600 hover:underline">View</Link>
+                    <Link
+                      to={`/receipts/${receipt.receipt_number}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      View
+                    </Link>
                   </td>
                 </tr>
               ))}
               {filteredReceipts.length === 0 && (
                 <tr>
                   <td colSpan={7} className="text-center text-gray-500 py-4">
-                    {receipts.length === 0 ? "No receipts found." : "No receipts match the current filters."}
+                    {receipts.length === 0
+                      ? "No receipts found."
+                      : "No receipts match the current filters."}
                   </td>
                 </tr>
               )}

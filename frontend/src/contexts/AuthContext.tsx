@@ -1,7 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { ReactNode } from 'react';
-import { getAccount } from '../api/auth';
-import type { AccountInfo } from '../api/auth';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import type { ReactNode } from "react";
+import { getAccount } from "../api/auth";
 
 interface User {
   employee_id: string;
@@ -34,7 +33,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -48,21 +47,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const isAuthenticated = !!user;
-  const isManager = user?.empl_role === 'Manager';
-  const isCashier = user?.empl_role === 'Cashier';
+  const isManager = user?.empl_role === "Manager";
+  const isCashier = user?.empl_role === "Cashier";
 
   const login = async (token: string) => {
-    localStorage.setItem('token', token);
+    localStorage.setItem("token", token);
     await refreshUser();
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem("token");
     setUser(null);
   };
 
   const refreshUser = async () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (!token) {
       setLoading(false);
       return;
@@ -72,22 +71,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await getAccount();
       // Convert AccountInfo to User, handling undefined values
       const user: User = {
-        employee_id: response.employee_id || '',
-        empl_surname: response.empl_surname || '',
-        empl_name: response.empl_name || '',
+        employee_id: response.employee_id || "",
+        empl_surname: response.empl_surname || "",
+        empl_name: response.empl_name || "",
         empl_patronymic: response.empl_patronymic || undefined,
-        empl_role: response.empl_role || '',
+        empl_role: response.empl_role || "",
         salary: response.salary || 0,
-        date_of_birth: response.date_of_birth || '',
-        date_of_start: response.date_of_start || '',
-        phone_number: response.phone_number || '',
-        city: response.city || '',
-        street: response.street || '',
-        zip_code: response.zip_code || '',
+        date_of_birth: response.date_of_birth || "",
+        date_of_start: response.date_of_start || "",
+        phone_number: response.phone_number || "",
+        city: response.city || "",
+        street: response.street || "",
+        zip_code: response.zip_code || "",
       };
       setUser(user);
     } catch (error) {
-      console.error('Failed to refresh user:', error);
+      console.error("Failed to refresh user:", error);
       logout();
     } finally {
       setLoading(false);
@@ -109,9 +108,5 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     refreshUser,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
-}; 
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};

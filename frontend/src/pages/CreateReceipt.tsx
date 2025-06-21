@@ -46,7 +46,7 @@ const CreateReceipt = () => {
   const updateItem = (
     idx: number,
     field: "upc" | "product_number",
-    value: any,
+    value: string | number,
   ) => {
     setItems(
       items.map((item, i) => (i === idx ? { ...item, [field]: value } : item)),
@@ -72,13 +72,13 @@ const CreateReceipt = () => {
     setLoading(true);
     setError(null);
     setSuccess(null);
-    
+
     if (!user?.employee_id) {
       setError("User authentication error. Please log in again.");
       setLoading(false);
       return;
     }
-    
+
     if (items.length === 0) {
       setError("Please add at least one item.");
       setLoading(false);
@@ -117,7 +117,7 @@ const CreateReceipt = () => {
       setCardNumber(undefined);
     } catch (err: unknown) {
       console.error("Receipt creation error:", err);
-      console.error("Error response:", err?.response);
+      console.error("Error response:", (err as any)?.response);
       const errorMessage =
         (err as any)?.response?.data?.error ||
         (err as any)?.response?.data?.message ||
@@ -168,7 +168,8 @@ const CreateReceipt = () => {
           <div className="w-full border p-2 rounded mt-1 bg-gray-50">
             {user ? (
               <div className="font-medium">
-                {user.empl_surname} {user.empl_name} {user.empl_patronymic || ""} ({user.employee_id})
+                {user.empl_surname} {user.empl_name}{" "}
+                {user.empl_patronymic || ""} ({user.employee_id})
               </div>
             ) : (
               <div className="text-gray-500">Loading user information...</div>

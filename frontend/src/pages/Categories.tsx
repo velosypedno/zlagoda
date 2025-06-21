@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
-import { fetchCategories, deleteCategory, updateCategory, createCategory } from "../api/categories";
+import {
+  fetchCategories,
+  deleteCategory,
+  updateCategory,
+  createCategory,
+} from "../api/categories";
 import { type Category } from "../types/category";
 import CategoryCard from "../components/CategoryCard";
+import ExportPdfButton from "../components/ExportPdfButton";
 import { useAuth } from "../contexts/AuthContext";
 
 const CategoriesPage = () => {
@@ -10,7 +16,7 @@ const CategoriesPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [search, setSearch] = useState("");
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>("asc");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const loadCategories = async () => {
     try {
@@ -18,6 +24,7 @@ const CategoriesPage = () => {
       setCategories(res.data || []);
     } catch (err) {
       setError("Failed to load categories");
+      console.error(err);
     }
   };
 
@@ -38,7 +45,7 @@ const CategoriesPage = () => {
     try {
       await updateCategory(id, name);
       setCategories((prev) =>
-        prev.map((cat) => (cat.id === id ? { ...cat, name } : cat))
+        prev.map((cat) => (cat.id === id ? { ...cat, name } : cat)),
       );
     } catch {
       setError("Failed to update category");
@@ -53,7 +60,7 @@ const CategoriesPage = () => {
       setCategories((prev) => [...prev, res.data]);
       setNewName("");
       setError(null);
-      await loadCategories()
+      await loadCategories();
     } catch {
       setError("Failed to create category");
     }
@@ -61,18 +68,30 @@ const CategoriesPage = () => {
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Categories</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Categories</h1>
+        <ExportPdfButton
+          entityType="Categories"
+          apiEndpoint="/api/categories"
+          title="Categories Report"
+          filename="categories-export.pdf"
+          columns={[
+            { key: "id", label: "ID", width: "20%" },
+            { key: "name", label: "Category Name", width: "80%" },
+          ]}
+        />
+      </div>
 
       <input
         type="text"
         placeholder="Search categories by name..."
         value={search}
-        onChange={e => setSearch(e.target.value)}
+        onChange={(e) => setSearch(e.target.value)}
         className="mb-6 border rounded px-3 py-2 w-full max-w-xs"
       />
       <select
         value={sortOrder}
-        onChange={e => setSortOrder(e.target.value as 'asc' | 'desc')}
+        onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
         className="mb-6 ml-2 border rounded px-3 py-2"
       >
         <option value="asc">Sort A-Z</option>
@@ -103,15 +122,15 @@ const CategoriesPage = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {categories
-          .filter(category => {
+          .filter((category) => {
             const q = search.trim().toLowerCase();
             return !q || category.name.toLowerCase().includes(q);
           })
           .sort((a, b) => {
             const nameA = a.name.toLowerCase();
             const nameB = b.name.toLowerCase();
-            if (nameA < nameB) return sortOrder === 'asc' ? -1 : 1;
-            if (nameA > nameB) return sortOrder === 'asc' ? 1 : -1;
+            if (nameA < nameB) return sortOrder === "asc" ? -1 : 1;
+            if (nameA > nameB) return sortOrder === "asc" ? 1 : -1;
             return 0;
           })
           .map((category) => (

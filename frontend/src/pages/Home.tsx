@@ -72,6 +72,12 @@ const Home = () => (
       >
         Create Receipt
       </Link>
+      <Link
+        to="/test-pdf"
+        className="block border border-green-500 text-green-700 hover:bg-green-50 font-medium py-2 px-4 rounded text-center transition"
+      >
+        🧪 Test PDF Export
+      </Link>
     </div>
   </div>
 );

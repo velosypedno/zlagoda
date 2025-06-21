@@ -11,6 +11,7 @@ import ReceiptDetails from "./pages/ReceiptDetails";
 import IndividualsVlad from "./pages/IndividualsVlad";
 import IndividualsArthur from "./pages/IndividualsArthur";
 import IndividualsOleksii from "./pages/IndividualsOleksii";
+import TestPdfExport from "./pages/TestPdfExport";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -117,6 +118,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <IndividualsOleksii />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/test-pdf"
+              element={
+                <ProtectedRoute>
+                  <TestPdfExport />
                 </ProtectedRoute>
               }
             />

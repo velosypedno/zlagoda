@@ -17,6 +17,7 @@ import {
 import { fetchProducts } from "../api/products";
 import { fetchCategories } from "../api/categories";
 import StoreProductCard from "../components/StoreProductCard";
+import ExportPdfButton from "../components/ExportPdfButton";
 import { useAuth } from "../contexts/AuthContext";
 
 const StoreProducts = () => {
@@ -298,14 +299,30 @@ const StoreProducts = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Store Products</h1>
-        {isManager && (
-          <button
-            onClick={() => setShowForm(true)}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
-          >
-            Add Store Product
-          </button>
-        )}
+        <div className="flex gap-2">
+          <ExportPdfButton
+            entityType="Store Products"
+            apiEndpoint="/api/store-products/details"
+            title="Store Products Report"
+            filename="store-products-export.pdf"
+            columns={[
+              { key: "upc", label: "UPC", width: "15%" },
+              { key: "product_name", label: "Product", width: "25%" },
+              { key: "category_name", label: "Category", width: "20%" },
+              { key: "selling_price", label: "Price", width: "10%" },
+              { key: "products_number", label: "Stock", width: "10%" },
+              { key: "promotional_product", label: "Promo", width: "10%" },
+            ]}
+          />
+          {isManager && (
+            <button
+              onClick={() => setShowForm(true)}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+            >
+              Add Store Product
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (

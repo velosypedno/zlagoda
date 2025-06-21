@@ -11,6 +11,7 @@ import {
 } from "../api/products";
 import { fetchCategories } from "../api/categories";
 import ProductCard from "../components/ProductCard";
+import ExportPdfButton from "../components/ExportPdfButton";
 import { useAuth } from "../contexts/AuthContext";
 
 const Products = () => {
@@ -203,14 +204,32 @@ const Products = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Products</h1>
-        {isManager && (
-          <button
-            onClick={() => setShowForm(true)}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
-          >
-            Add Product
-          </button>
-        )}
+        <div className="flex gap-2">
+          <ExportPdfButton
+            entityType="Products"
+            apiEndpoint="/api/products"
+            title="Products Inventory Report"
+            filename="products-export.pdf"
+            columns={[
+              { key: "product_id", label: "ID", width: "8%" },
+              { key: "name", label: "Product Name", width: "30%" },
+              {
+                key: "characteristics",
+                label: "Characteristics",
+                width: "40%",
+              },
+              { key: "category_id", label: "Category ID", width: "22%" },
+            ]}
+          />
+          {isManager && (
+            <button
+              onClick={() => setShowForm(true)}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+            >
+              Add Product
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (
