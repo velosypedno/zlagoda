@@ -54,25 +54,32 @@ const StoreProducts = () => {
     loadData();
   }, []);
 
-  useEffect(() => {
-    loadFilteredStoreProducts();
-  }, [selectedCategory, searchTerm, showPromotionalOnly]);
+  const getFilteredStoreProducts = () => {
+    let filteredProducts = [...storeProducts];
 
-  // Debug form data changes
-  useEffect(() => {
-    console.log("FormData changed:", formData);
-  }, [formData]);
-
-  // Debug products array changes
-  useEffect(() => {
-    console.log("Products array changed:", products.length, "products");
-    if (products.length > 0) {
-      console.log("First product structure:", products[0]);
-      console.log("Product keys:", Object.keys(products[0]));
-      console.log("Product.product_id specifically:", products[0].product_id);
-      console.log("All products:", products);
+    if (showPromotionalOnly) {
+      filteredProducts = filteredProducts.filter(
+        (p) => p.promotional_product,
+      );
     }
-  }, [products]);
+
+    if (searchTerm.trim()) {
+      filteredProducts = filteredProducts.filter((p) =>
+        p.product_name.toLowerCase().includes(searchTerm.toLowerCase()),
+      );
+    }
+    
+    if (selectedCategory > 0) {
+      const category = categories.find((c) => c.id === selectedCategory);
+      if (category) {
+        filteredProducts = filteredProducts.filter(
+          (p) => p.category_name === category.name,
+        );
+      }
+    }
+    
+    return filteredProducts;
+  };
 
   const loadData = async () => {
     try {
@@ -95,37 +102,6 @@ const StoreProducts = () => {
     }
   };
 
-  const loadFilteredStoreProducts = async () => {
-    try {
-      setLoading(true);
-      let storeProductsData;
-
-      if (searchTerm.trim()) {
-        storeProductsData = await fetchStoreProductsByName(searchTerm.trim());
-      } else if (selectedCategory > 0) {
-        storeProductsData =
-          await fetchStoreProductsByCategory(selectedCategory);
-      } else {
-        storeProductsData = await fetchStoreProductsWithDetails();
-      }
-
-      let filteredProducts = storeProductsData.data || [];
-      if (showPromotionalOnly) {
-        filteredProducts = filteredProducts.filter(
-          (p) => p.promotional_product,
-        );
-      }
-
-      setStoreProducts(filteredProducts);
-      setError(null);
-    } catch (err) {
-      setError("Failed to load filtered store products");
-      console.error("Error loading filtered store products:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSort = (
     field: "product_name" | "upc" | "selling_price" | "products_number",
   ) => {
@@ -138,7 +114,7 @@ const StoreProducts = () => {
   };
 
   const getSortedStoreProducts = () => {
-    return [...storeProducts].sort((a, b) => {
+    return getFilteredStoreProducts().sort((a, b) => {
       let aValue, bValue;
 
       switch (sortBy) {

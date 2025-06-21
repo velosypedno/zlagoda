@@ -38,9 +38,18 @@ const Products = () => {
     loadData();
   }, []);
 
-  useEffect(() => {
-    loadFilteredProducts();
-  }, [selectedCategory, searchTerm]);
+  const getFilteredProducts = () => {
+    let filtered = [...products];
+    if (searchTerm) {
+      filtered = filtered.filter((p) =>
+        p.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      );
+    }
+    if (selectedCategory) {
+      filtered = filtered.filter((p) => p.category_id === selectedCategory);
+    }
+    return filtered;
+  };
 
   const loadData = async () => {
     try {
@@ -60,29 +69,6 @@ const Products = () => {
     }
   };
 
-  const loadFilteredProducts = async () => {
-    try {
-      setLoading(true);
-      let productsData;
-
-      if (searchTerm.trim()) {
-        productsData = await fetchProductsByName(searchTerm.trim());
-      } else if (selectedCategory > 0) {
-        productsData = await fetchProductsByCategory(selectedCategory);
-      } else {
-        productsData = await fetchProducts();
-      }
-
-      setProducts(productsData.data || []);
-      setError(null);
-    } catch (err) {
-      setError("Failed to load filtered products");
-      console.error("Error loading filtered products:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSort = (field: "name" | "id") => {
     if (sortBy === field) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -93,7 +79,7 @@ const Products = () => {
   };
 
   const getSortedProducts = () => {
-    return [...products].sort((a, b) => {
+    return getFilteredProducts().sort((a, b) => {
       let aValue, bValue;
 
       if (sortBy === "name") {
@@ -209,7 +195,6 @@ const Products = () => {
             entityType="Products"
             apiEndpoint="/api/products"
             title="Products Inventory Report"
-            filename="products-export.pdf"
             columns={[
               { key: "product_id", label: "ID", width: "8%" },
               { key: "name", label: "Product Name", width: "30%" },
@@ -396,12 +381,12 @@ const Products = () => {
         </div>
       )}
 
-      {products.length === 0 ? (
+      {getSortedProducts().length === 0 ? (
         <div className="text-center text-gray-500 py-8">
-          No products found. Create your first product!
+          No products found.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {getSortedProducts().map((product) => (
             <ProductCard
               key={product.product_id}
