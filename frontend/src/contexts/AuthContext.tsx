@@ -7,6 +7,7 @@ interface User {
   employee_id: string;
   empl_surname: string;
   empl_name: string;
+  empl_patronymic?: string;
   empl_role: string;
   salary: number;
   date_of_birth: string;
@@ -74,6 +75,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         employee_id: response.employee_id || '',
         empl_surname: response.empl_surname || '',
         empl_name: response.empl_name || '',
+        empl_patronymic: response.empl_patronymic || undefined,
         empl_role: response.empl_role || '',
         salary: response.salary || 0,
         date_of_birth: response.date_of_birth || '',

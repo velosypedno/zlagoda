@@ -4,14 +4,13 @@ import type { ReceiptCreateComplete } from "../types/receipt";
 import type { StoreProductWithDetails } from "../types/store_product";
 import type { Product } from "../types/product";
 import type { CustomerCard } from "../types/customer_card";
-import type { Employee } from "../types/employee";
 import { fetchStoreProductsWithDetails } from "../api/store_products";
 import { fetchProducts } from "../api/products";
 import { getCustomerCards } from "../api/customer_cards";
-import { fetchEmployees } from "../api/employees";
+import { useAuth } from "../contexts/AuthContext";
 
 const CreateReceipt = () => {
-  const [employeeId, setEmployeeId] = useState("");
+  const { user } = useAuth();
   const [cardNumber, setCardNumber] = useState<string | undefined>(undefined);
   const [items, setItems] = useState<{ upc: string; product_number: number }[]>(
     [],
@@ -19,7 +18,6 @@ const CreateReceipt = () => {
   const [products, setProducts] = useState<StoreProductWithDetails[]>([]);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [customerCards, setCustomerCards] = useState<CustomerCard[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ receipt_number: string } | null>(
@@ -31,7 +29,6 @@ const CreateReceipt = () => {
     fetchStoreProductsWithDetails().then((res) => setProducts(res.data || []));
     fetchProducts().then((res) => setAllProducts(res.data || []));
     getCustomerCards().then(setCustomerCards);
-    fetchEmployees().then((res) => setEmployees(res.data || []));
   }, []);
 
   const addItem = () => {
@@ -75,11 +72,13 @@ const CreateReceipt = () => {
     setLoading(true);
     setError(null);
     setSuccess(null);
-    if (!employeeId) {
-      setError("Please select a cashier.");
+    
+    if (!user?.employee_id) {
+      setError("User authentication error. Please log in again.");
       setLoading(false);
       return;
     }
+    
     if (items.length === 0) {
       setError("Please add at least one item.");
       setLoading(false);
@@ -99,7 +98,7 @@ const CreateReceipt = () => {
       const dd = String(today.getDate()).padStart(2, "0");
       const print_date = `${yyyy}-${mm}-${dd}`;
       const receipt: ReceiptCreateComplete = {
-        employee_id: employeeId,
+        employee_id: user.employee_id,
         card_number: cardNumber || null,
         print_date,
         items: items.map((i) => {
@@ -115,7 +114,6 @@ const CreateReceipt = () => {
       const res = await createReceiptComplete(receipt);
       setSuccess({ receipt_number: res.data.id });
       setItems([]);
-      setEmployeeId("");
       setCardNumber(undefined);
     } catch (err: unknown) {
       console.error("Receipt creation error:", err);
@@ -166,25 +164,18 @@ const CreateReceipt = () => {
       )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="font-medium">Cashier (Employee) *</label>
-          <select
-            value={employeeId}
-            onChange={(e) => setEmployeeId(e.target.value)}
-            className="w-full border p-2 rounded mt-1"
-            required
-          >
-            <option value="">Select cashier...</option>
-            {employees
-              .filter((emp) => emp.empl_role === "Cashier")
-              .map((emp) => (
-                <option key={emp.employee_id} value={emp.employee_id}>
-                  {emp.empl_surname} {emp.empl_name} {emp.empl_patronymic || ""} (
-                  {emp.employee_id})
-                </option>
-              ))}
-          </select>
+          <label className="font-medium">Cashier</label>
+          <div className="w-full border p-2 rounded mt-1 bg-gray-50">
+            {user ? (
+              <div className="font-medium">
+                {user.empl_surname} {user.empl_name} {user.empl_patronymic || ""} ({user.employee_id})
+              </div>
+            ) : (
+              <div className="text-gray-500">Loading user information...</div>
+            )}
+          </div>
           <div className="text-xs text-gray-500 mt-1">
-            Select the cashier responsible for this receipt.
+            Receipt will be created under your account.
           </div>
         </div>
         <div>
