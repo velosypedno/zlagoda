@@ -174,12 +174,14 @@ const CreateReceipt = () => {
             required
           >
             <option value="">Select cashier...</option>
-            {employees.map((emp) => (
-              <option key={emp.employee_id} value={emp.employee_id}>
-                {emp.empl_surname} {emp.empl_name} {emp.empl_patronymic || ""} (
-                {emp.employee_id})
-              </option>
-            ))}
+            {employees
+              .filter((emp) => emp.empl_role === "Cashier")
+              .map((emp) => (
+                <option key={emp.employee_id} value={emp.employee_id}>
+                  {emp.empl_surname} {emp.empl_name} {emp.empl_patronymic || ""} (
+                  {emp.employee_id})
+                </option>
+              ))}
           </select>
           <div className="text-xs text-gray-500 mt-1">
             Select the cashier responsible for this receipt.
