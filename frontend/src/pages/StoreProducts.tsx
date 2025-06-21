@@ -13,7 +13,6 @@ import {
   createStoreProduct,
   updateStoreProduct,
   deleteStoreProduct,
-  updateProductQuantity,
 } from "../api/store_products";
 import { fetchProducts } from "../api/products";
 import { fetchCategories } from "../api/categories";
@@ -21,8 +20,8 @@ import StoreProductCard from "../components/StoreProductCard";
 import { useAuth } from "../contexts/AuthContext";
 
 const StoreProducts = () => {
-const { isManager } = useAuth();
-const [storeProducts, setStoreProducts] = useState<StoreProductWithDetails[]>(
+  const { isManager } = useAuth();
+  const [storeProducts, setStoreProducts] = useState<StoreProductWithDetails[]>(
     [],
   );
   const [products, setProducts] = useState<Product[]>([]);
@@ -270,17 +269,6 @@ const [storeProducts, setStoreProducts] = useState<StoreProductWithDetails[]>(
     } catch (err) {
       setError("Failed to delete store product");
       console.error("Error deleting store product:", err);
-    }
-  };
-
-  const handleUpdateQuantity = async (upc: string, quantityChange: number) => {
-    try {
-      await updateProductQuantity(upc, quantityChange);
-      await loadData();
-      setError(null);
-    } catch (err) {
-      setError("Failed to update quantity");
-      console.error("Error updating quantity:", err);
     }
   };
 

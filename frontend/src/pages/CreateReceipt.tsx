@@ -22,7 +22,9 @@ const CreateReceipt = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<any>(null);
+  const [success, setSuccess] = useState<{ receipt_number: string } | null>(
+    null,
+  );
   const itemRefs = useRef<(HTMLSelectElement | null)[]>([]);
 
   useEffect(() => {
@@ -63,12 +65,12 @@ const CreateReceipt = () => {
     const product = products.find((p) => p.upc === upc);
     if (!product) return { price: 0, isPromo: false, total: 0 };
     let price = product.selling_price;
-    let isPromo = product.promotional_product;
+    const isPromo = product.promotional_product;
     if (isPromo) price = price * 0.8;
     return { price, isPromo, total: price * quantity };
   };
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -115,13 +117,13 @@ const CreateReceipt = () => {
       setItems([]);
       setEmployeeId("");
       setCardNumber(undefined);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Receipt creation error:", err);
       console.error("Error response:", err?.response);
       const errorMessage =
-        err?.response?.data?.error ||
-        err?.response?.data?.message ||
-        err?.message ||
+        (err as any)?.response?.data?.error ||
+        (err as any)?.response?.data?.message ||
+        (err as any)?.message ||
         "Failed to create receipt";
       setError(`Error: ${errorMessage}`);
     } finally {
@@ -231,8 +233,9 @@ const CreateReceipt = () => {
                   );
                   const product = products.find((p) => p.upc === item.upc);
                   const characteristics = product
-                    ? allProducts.find((prod) => prod.id === product.product_id)
-                        ?.characteristics
+                    ? allProducts.find(
+                        (prod) => prod.product_id === product.product_id,
+                      )?.characteristics
                     : undefined;
                   return (
                     <tr key={idx}>

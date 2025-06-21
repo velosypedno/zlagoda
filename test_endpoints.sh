@@ -57,13 +57,20 @@ test_endpoint() {
     local expected_status=$4
     local test_name=$5
 
+    # Prepare headers
+    local headers=("-H" "Content-Type: application/json")
+    if [ -n "$JWT_TOKEN" ]; then
+        headers+=("-H" "Authorization: Bearer $JWT_TOKEN")
+    fi
+
     if [ -n "$data" ]; then
         response=$(curl -s -w "HTTPSTATUS:%{http_code}" -X "$method" \
-            -H "Content-Type: application/json" \
+            "${headers[@]}" \
             -d "$data" \
             "$BASE_URL$endpoint")
     else
         response=$(curl -s -w "HTTPSTATUS:%{http_code}" -X "$method" \
+            "${headers[@]}" \
             "$BASE_URL$endpoint")
     fi
 
@@ -91,14 +98,61 @@ extract_field() {
     echo "$json" | grep -o "\"$field\":\"[^\"]*\"" | sed "s/\"$field\":\"\(.*\)\"/\1/"
 }
 
-echo -e "${PINK}🌸✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨🌸${NC}"
-echo -e "${PINK}✨                                                      ✨${NC}"
-echo -e "${PINK}✨           🌸 KAWAII API TESTING BEGINS! 🌸           ✨${NC}"
-echo -e "${PINK}✨                    (◕‿◕)♡                           ✨${NC}"
-echo -e "${PINK}✨                                                      ✨${NC}"
-echo -e "${PINK}🌸✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨🌸${NC}"
-echo
+# Function to login and get JWT token
+login_and_get_token() {
+    print_status "INFO" "Logging in to get authentication token! (◕‿◕)♡"
 
+    # First register a test user
+    register_response=$(curl -s -w "HTTPSTATUS:%{http_code}" -X "POST" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "login": "kawaii_test_user",
+            "password": "kawaii123",
+            "surname": "Test",
+            "name": "Kawaii",
+            "patronymic": "Chan",
+            "role": "Manager",
+            "salary": 50000.00,
+            "date_of_birth": "1990-01-01",
+            "date_of_start": "2020-01-01",
+            "phone_number": "+380999999999",
+            "city": "Test City",
+            "street": "Test Street 1",
+            "zip_code": "12345"
+        }' \
+        "http://localhost:8080/api/register")
+
+    register_http_code=$(echo "$register_response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+    register_body=$(echo "$register_response" | sed -e 's/HTTPSTATUS:.*//')
+
+    if [ "$register_http_code" -eq 201 ]; then
+        JWT_TOKEN=$(echo "$register_body" | grep -o '"token":"[^"]*"' | sed 's/"token":"\(.*\)"/\1/')
+        print_status "PASS" "User registered and token obtained! ✨"
+    else
+        # If registration fails, try login with existing user
+        print_status "INFO" "Registration failed, trying login with existing user..."
+
+        login_response=$(curl -s -w "HTTPSTATUS:%{http_code}" -X "POST" \
+            -H "Content-Type: application/json" \
+            -d '{
+                "login": "kawaii_test_user",
+                "password": "kawaii123"
+            }' \
+            "http://localhost:8080/api/login")
+
+        login_http_code=$(echo "$login_response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+        login_body=$(echo "$login_response" | sed -e 's/HTTPSTATUS:.*//')
+
+        if [ "$login_http_code" -eq 200 ]; then
+            JWT_TOKEN=$(echo "$login_body" | grep -o '"token":"[^"]*"' | sed 's/"token":"\(.*\)"/\1/')
+            print_status "PASS" "Login successful and token obtained! ✨"
+        else
+            print_status "FAIL" "Failed to login and get token! Tests will fail (╥﹏╥)"
+            echo "Register response: $register_body" >&2
+            echo "Login response: $login_body" >&2
+        fi
+    fi
+}
 # Store test IDs for cleanup
 CATEGORY_ID=""
 EMPLOYEE_ID=""
@@ -107,6 +161,22 @@ PRODUCT_ID=""
 STORE_PRODUCT_UPC=""
 RECEIPT_NUMBER=""
 RECEIPT_NUMBER_2=""
+
+# Authentication token
+JWT_TOKEN=""
+
+# Start kawaii banner
+echo -e "${PINK}🌸✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨🌸${NC}"
+echo -e "${PINK}✨                                                      ✨${NC}"
+echo -e "${PINK}✨           🌸 KAWAII API TESTING BEGINS! 🌸           ✨${NC}"
+echo -e "${PINK}✨                    (◕‿◕)♡                           ✨${NC}"
+echo -e "${PINK}✨                                                      ✨${NC}"
+echo -e "${PINK}🌸✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨🌸${NC}"
+echo
+
+# Login first to get authentication token
+login_and_get_token
+echo
 
 echo -e "${CYAN}🏷️ === KAWAII CATEGORY ENDPOINTS === 🏷️${NC}"
 

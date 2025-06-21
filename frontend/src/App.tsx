@@ -27,22 +27,92 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
-            
+
             {/* Public routes (require authentication) */}
-            <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-            <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
-            <Route path="/categories" element={<ProtectedRoute><CategoriesPage /></ProtectedRoute>} />
-            <Route path="/customer-cards" element={<ProtectedRoute><CustomerCardsPage /></ProtectedRoute>} />
-            <Route path="/products" element={<ProtectedRoute><ProductsPage /></ProtectedRoute>} />
-            <Route path="/store-products" element={<ProtectedRoute><StoreProductsPage /></ProtectedRoute>} />
-            <Route path="/receipt" element={<ProtectedRoute><Receipts /></ProtectedRoute>} />
-            <Route path="/receipts/:receipt_number" element={<ProtectedRoute><ReceiptDetails /></ProtectedRoute>} />
-            
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/account"
+              element={
+                <ProtectedRoute>
+                  <Account />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/categories"
+              element={
+                <ProtectedRoute>
+                  <CategoriesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/customer-cards"
+              element={
+                <ProtectedRoute>
+                  <CustomerCardsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/products"
+              element={
+                <ProtectedRoute>
+                  <ProductsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/store-products"
+              element={
+                <ProtectedRoute>
+                  <StoreProductsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/receipts"
+              element={
+                <ProtectedRoute>
+                  <Receipts />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/receipts/:receipt_number"
+              element={
+                <ProtectedRoute>
+                  <ReceiptDetails />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Manager-only routes */}
-            <Route path="/employees" element={<ProtectedRoute requireManager><EmployeesPage /></ProtectedRoute>} />
-            
+            <Route
+              path="/employees"
+              element={
+                <ProtectedRoute requireManager>
+                  <EmployeesPage />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Cashier-only routes */}
-            <Route path="/create-receipt" element={<ProtectedRoute requireCashier><CreateReceipt /></ProtectedRoute>} />
+            <Route
+              path="/create-receipt"
+              element={
+                <ProtectedRoute requireCashier>
+                  <CreateReceipt />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </div>
       </BrowserRouter>

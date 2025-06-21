@@ -10,17 +10,22 @@ interface ProductCardProps {
   onDelete: (id: number) => void;
 }
 
-const ProductCard = ({ product, categories, onEdit, onDelete }: ProductCardProps) => {
+const ProductCard = ({
+  product,
+  categories,
+  onEdit,
+  onDelete,
+}: ProductCardProps) => {
   const { isManager } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const category = categories.find(cat => cat.id === product.category_id);
+  const category = categories.find((cat) => cat.id === product.category_id);
 
   const handleDelete = async () => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       setIsDeleting(true);
       try {
-        await onDelete(product.id);
+        await onDelete(product.product_id);
       } finally {
         setIsDeleting(false);
       }
@@ -53,20 +58,22 @@ const ProductCard = ({ product, categories, onEdit, onDelete }: ProductCardProps
           )}
         </div>
       </div>
-      
+
       <div className="space-y-2">
         <div>
-          <span className="text-sm font-medium text-gray-600">Characteristics:</span>
+          <span className="text-sm font-medium text-gray-600">
+            Characteristics:
+          </span>
           <p className="text-gray-800 mt-1">{product.characteristics}</p>
         </div>
-        
+
         <div>
           <span className="text-sm font-medium text-gray-600">Category:</span>
           <p className="text-gray-800 mt-1">
             {category ? category.name : `ID: ${product.category_id}`}
           </p>
         </div>
-        
+
         <div>
           <span className="text-sm font-medium text-gray-600">Product ID:</span>
           <p className="text-gray-800 mt-1">{product.product_id}</p>
@@ -76,4 +83,4 @@ const ProductCard = ({ product, categories, onEdit, onDelete }: ProductCardProps
   );
 };
 
-export default ProductCard; 
+export default ProductCard;

@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/velosypedno/zlagoda/internal/models"
 	"github.com/velosypedno/zlagoda/internal/utils"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type employeeCreator interface {
@@ -201,7 +202,7 @@ func NewEmployeeDeleteDELETEHandler(service employeeRemover) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var id string = c.Param("id")
 		log.Printf("[EmployeeDeleteDELETE] Attempting to delete employee with ID: %s", id)
-		
+
 		if len(id) != 10 {
 			log.Printf("[EmployeeDeleteDELETE] Invalid employee ID length: %d, expected 10", len(id))
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid employee ID"})
@@ -349,19 +350,19 @@ type employeeCreatorWithAuth interface {
 func NewEmployeeCreateWithAuthPOSTHandler(service employeeCreatorWithAuth) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		type request struct {
-			Login       string  `json:"login" binding:"required"`
-			Password    string  `json:"password" binding:"required,min=6"`
-			Surname     *string `json:"empl_surname" binding:"omitempty,required,max=50"`
-			Name        *string `json:"empl_name" binding:"omitempty,required,max=50"`
-			Patronymic  *string `json:"empl_patronymic" binding:"omitempty,max=50"`
-			Role        *string `json:"empl_role" binding:"omitempty,required,max=10"`
+			Login       string   `json:"login" binding:"required"`
+			Password    string   `json:"password" binding:"required,min=6"`
+			Surname     *string  `json:"empl_surname" binding:"omitempty,required,max=50"`
+			Name        *string  `json:"empl_name" binding:"omitempty,required,max=50"`
+			Patronymic  *string  `json:"empl_patronymic" binding:"omitempty,max=50"`
+			Role        *string  `json:"empl_role" binding:"omitempty,required,max=10"`
 			Salary      *float64 `json:"salary" binding:"omitempty,required,gte=0"`
-			DateOfBirth *string `json:"date_of_birth" binding:"omitempty,required"`
-			DateOfStart *string `json:"date_of_start" binding:"omitempty,required"`
-			PhoneNumber *string `json:"phone_number" binding:"omitempty,required,len=13,startswith=+380"`
-			City        *string `json:"city" binding:"omitempty,required,max=50"`
-			Street      *string `json:"street" binding:"omitempty,required,max=50"`
-			ZipCode     *string `json:"zip_code" binding:"omitempty,required,max=9"`
+			DateOfBirth *string  `json:"date_of_birth" binding:"omitempty,required"`
+			DateOfStart *string  `json:"date_of_start" binding:"omitempty,required"`
+			PhoneNumber *string  `json:"phone_number" binding:"omitempty,required,len=13,startswith=+380"`
+			City        *string  `json:"city" binding:"omitempty,required,max=50"`
+			Street      *string  `json:"street" binding:"omitempty,required,max=50"`
+			ZipCode     *string  `json:"zip_code" binding:"omitempty,required,max=9"`
 		}
 		var req request
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -396,7 +397,7 @@ func NewEmployeeCreateWithAuthPOSTHandler(service employeeCreatorWithAuth) gin.H
 			return
 		}
 
-		if !utils.IsSalaryValid(*req.Salary) {
+		if !utils.IsDecimalValid(*req.Salary) {
 			log.Printf("[EmployeeCreateWithAuthPOST] Invalid salary: %v", *req.Salary)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid salary"})
 			return
