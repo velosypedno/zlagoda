@@ -90,6 +90,13 @@ func SetupRoutes(c *ioc.HandlerContainer, cfg *config.Config) *gin.Engine {
 		api.PATCH("/sales/:upc/:receipt_number", c.SaleUpdatePATCHHandler)
 
 		api.GET("/receipts/:receipt_number/total", c.ReceiptTotalGETHandler)
+
+		api.GET("/vlad1", c.Vlad1GETHandler)
+		api.GET("/vlad2", c.Vlad1GETHandler)
+		api.GET("/arthur1", c.Arthur1GETHandler)
+		api.GET("/arthur2", c.Arthur2GETHandler)
+		api.GET("/oleksii1", c.Oleksii1GETHandler)
+		api.GET("/oleksii2", c.Oleksii2GETHandler)
 	}
 	return router
 }

@@ -32,12 +32,12 @@ type HandlerContainer struct {
 	CustomerCardDeleteDELETEHandler gin.HandlerFunc
 	CustomerCardUpdatePATCHHandler  gin.HandlerFunc
 
-	EmployeeCreatePOSTHandler   gin.HandlerFunc
+	EmployeeCreatePOSTHandler         gin.HandlerFunc
 	EmployeeCreateWithAuthPOSTHandler gin.HandlerFunc
-	EmployeeRetrieveGETHandler  gin.HandlerFunc
-	EmployeesListGETHandler     gin.HandlerFunc
-	EmployeeDeleteDELETEHandler gin.HandlerFunc
-	EmployeeUpdatePATCHHandler  gin.HandlerFunc
+	EmployeeRetrieveGETHandler        gin.HandlerFunc
+	EmployeesListGETHandler           gin.HandlerFunc
+	EmployeeDeleteDELETEHandler       gin.HandlerFunc
+	EmployeeUpdatePATCHHandler        gin.HandlerFunc
 
 	ReceiptCreatePOSTHandler         gin.HandlerFunc
 	ReceiptCreateCompletePOSTHandler gin.HandlerFunc
@@ -84,6 +84,13 @@ type HandlerContainer struct {
 	CheckCreatePOSTHandler              gin.HandlerFunc
 	ChecksListGETHandler                gin.HandlerFunc
 	CheckRetrieveGETHandler             gin.HandlerFunc
+
+	Vlad1GETHandler    gin.HandlerFunc
+	Vlad2GETHandler    gin.HandlerFunc
+	Arthur1GETHandler  gin.HandlerFunc
+	Arthur2GETHandler  gin.HandlerFunc
+	Oleksii1GETHandler gin.HandlerFunc
+	Oleksii2GETHandler gin.HandlerFunc
 }
 
 // Close properly closes the database connection
@@ -157,12 +164,12 @@ func BuildHandlerContainer(c *config.Config) (*HandlerContainer, error) {
 		CustomerCardDeleteDELETEHandler: handlers.NewCustomerCardDeleteDELETEHandler(customerCardService),
 		CustomerCardUpdatePATCHHandler:  handlers.NewCustomerCardUpdatePATCHHandler(customerCardService),
 
-		EmployeeCreatePOSTHandler:   handlers.NewEmployeeCreatePOSTHandler(employeeService),
+		EmployeeCreatePOSTHandler:         handlers.NewEmployeeCreatePOSTHandler(employeeService),
 		EmployeeCreateWithAuthPOSTHandler: handlers.NewEmployeeCreateWithAuthPOSTHandler(employeeService),
-		EmployeeRetrieveGETHandler:  handlers.NewEmployeeRetrieveGETHandler(employeeService),
-		EmployeesListGETHandler:     handlers.NewEmployeesListGETHandler(employeeService),
-		EmployeeDeleteDELETEHandler: handlers.NewEmployeeDeleteDELETEHandler(employeeService),
-		EmployeeUpdatePATCHHandler:  handlers.NewEmployeeUpdatePATCHHandler(employeeService),
+		EmployeeRetrieveGETHandler:        handlers.NewEmployeeRetrieveGETHandler(employeeService),
+		EmployeesListGETHandler:           handlers.NewEmployeesListGETHandler(employeeService),
+		EmployeeDeleteDELETEHandler:       handlers.NewEmployeeDeleteDELETEHandler(employeeService),
+		EmployeeUpdatePATCHHandler:        handlers.NewEmployeeUpdatePATCHHandler(employeeService),
 
 		ReceiptCreatePOSTHandler:         handlers.NewReceiptCreatePOSTHandler(receiptService, c),
 		ReceiptCreateCompletePOSTHandler: handlers.NewReceiptCreateCompletePOSTHandler(receiptService, c),
