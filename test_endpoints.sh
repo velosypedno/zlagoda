@@ -345,42 +345,46 @@ echo
 echo -e "${GREEN}🧾 === KAWAII RECEIPT ENDPOINTS === 🧾${NC}"
 
 # Test Receipt Creation (requires employee)
+# Test Receipt Creation
 print_status "INFO" "Testing Receipt endpoints with happiness! (◡‿◡)♡"
-if [ -n "$EMPLOYEE_ID" ]; then
-    receipt_response=$(test_endpoint "POST" "/receipts" "{
+
+# Test Get Receipts List
+test_endpoint "GET" "/receipts" "" 200 "List All Beautiful Receipts"
+
+# Test Complete Receipt Creation with items (preferred method)
+if [ -n "$EMPLOYEE_ID" ] && [ -n "$STORE_PRODUCT_UPC" ] && [ -n "$CUSTOMER_CARD_NUMBER" ]; then
+    complete_receipt_response=$(test_endpoint "POST" "/receipts/complete" "{
         \"employee_id\":\"$EMPLOYEE_ID\",
+        \"card_number\":\"$CUSTOMER_CARD_NUMBER\",
         \"print_date\":\"2024-01-15\",
-        \"sum_total\":159.99
-    }" 201 "Create Kawaii Receipt")
-    RECEIPT_NUMBER=$(extract_field "$receipt_response" "id")
+        \"items\":[{
+            \"upc\":\"$STORE_PRODUCT_UPC\",
+            \"product_number\":3,
+            \"selling_price\":39.99
+        }]
+    }" 201 "Create Complete Kawaii Receipt with Items")
+    RECEIPT_NUMBER=$(extract_field "$complete_receipt_response" "id")
 
-    # Test Get Receipts List
-    test_endpoint "GET" "/receipts" "" 200 "List All Beautiful Receipts"
-
+    # Test Get Receipt by ID
     if [ -n "$RECEIPT_NUMBER" ]; then
-        # Test Get Receipt by Number
         test_endpoint "GET" "/receipts/$RECEIPT_NUMBER" "" 200 "Get Receipt by Magic Number"
 
         # Test Update Receipt
-        test_endpoint "PATCH" "/receipts/$RECEIPT_NUMBER" '{"sum_total":179.99}' 200 "Update Receipt with More Love"
-
-        # Test Receipt Total
-        test_endpoint "GET" "/receipts/$RECEIPT_NUMBER/total" "" 200 "Calculate Kawaii Receipt Total"
+        test_endpoint "PATCH" "/receipts/$RECEIPT_NUMBER" '{"sum_total":169.99}' 200 "Update Receipt with More Love"
     fi
 
-    # Test Complete Receipt Creation
-    if [ -n "$EMPLOYEE_ID" ] && [ -n "$STORE_PRODUCT_UPC" ] && [ -n "$CUSTOMER_CARD_NUMBER" ]; then
-        complete_receipt_response=$(test_endpoint "POST" "/receipts/complete" "{
+    # Create a second complete receipt for additional testing
+    if [ -n "$STORE_PRODUCT_UPC" ]; then
+        complete_receipt_response2=$(test_endpoint "POST" "/receipts/complete" "{
             \"employee_id\":\"$EMPLOYEE_ID\",
-            \"card_number\":\"$CUSTOMER_CARD_NUMBER\",
             \"print_date\":\"2024-01-16\",
             \"items\":[{
                 \"upc\":\"$STORE_PRODUCT_UPC\",
                 \"product_number\":2,
                 \"selling_price\":39.99
             }]
-        }" 201 "Create Complete Kawaii Receipt with Items")
-        RECEIPT_NUMBER_2=$(extract_field "$complete_receipt_response" "id")
+        }" 201 "Create Second Complete Kawaii Receipt")
+        RECEIPT_NUMBER_2=$(extract_field "$complete_receipt_response2" "id")
     fi
 fi
 
@@ -389,42 +393,42 @@ echo
 echo -e "${RED}💰 === KAWAII SALE ENDPOINTS === 💰${NC}"
 
 # Test Sale Creation (requires UPC and receipt)
+# Test Sale Creation and Management
 print_status "INFO" "Testing Sale endpoints with excitement! ✧*｡ヾ(｡>﹏<｡)ﾉ✧*｡"
+
+# Test Get Sales List
+test_endpoint "GET" "/sales" "" 200 "List All Amazing Sales"
+
+# Test Get Sales with Details
+test_endpoint "GET" "/sales/details" "" 200 "Get Sales with Kawaii Details"
+
 if [ -n "$STORE_PRODUCT_UPC" ] && [ -n "$RECEIPT_NUMBER" ]; then
-    test_endpoint "POST" "/sales" "{
-        \"upc\":\"$STORE_PRODUCT_UPC\",
-        \"receipt_number\":\"$RECEIPT_NUMBER\",
-        \"product_number\":3,
-        \"selling_price\":39.99
-    }" 201 "Create Kawaii Sale"
-
-    # Test Get Sales List
-    test_endpoint "GET" "/sales" "" 200 "List All Amazing Sales"
-
-    # Test Get Sales with Details
-    test_endpoint "GET" "/sales/details" "" 200 "Get Sales with Kawaii Details"
-
-    # Test Get Sale by Key
+    # Test Get Sale by Key (should exist from complete receipt creation)
     test_endpoint "GET" "/sales/$STORE_PRODUCT_UPC/$RECEIPT_NUMBER" "" 200 "Get Sale by Magic Key"
 
     # Test Get Sales by Receipt
     test_endpoint "GET" "/sales/by-receipt/$RECEIPT_NUMBER" "" 200 "Get Sales by Kawaii Receipt"
 
     # Test Get Sales by Receipt with Details
-    test_endpoint "GET" "/sales/by-receipt/$RECEIPT_NUMBER/details" "" 200 "Get Sales by Receipt with Details"
+    test_endpoint "GET" "/sales/by-receipt/$RECEIPT_NUMBER/details" "" 200 "Get Sales by Receipt with Kawaii Details"
 
     # Test Get Sales by UPC
     test_endpoint "GET" "/sales/by-upc/$STORE_PRODUCT_UPC" "" 200 "Get Sales by Magic UPC"
 
     # Test Update Sale
-    test_endpoint "PATCH" "/sales/$STORE_PRODUCT_UPC/$RECEIPT_NUMBER" '{"product_number":5}' 200 "Update Sale with More Kawaii"
+    test_endpoint "PATCH" "/sales/$STORE_PRODUCT_UPC/$RECEIPT_NUMBER" '{"product_number":4}' 200 "Update Sale with More Kawaii"
+
+    # Test Receipt Total Calculation
+    test_endpoint "GET" "/receipts/$RECEIPT_NUMBER/total" "" 200 "Calculate Kawaii Receipt Total"
 
     # Test Top Selling Products
-    test_endpoint "GET" "/sales/top-products?limit=5" "" 200 "Get Top Selling Kawaii Products"
+    test_endpoint "GET" "/sales/top-products?limit=5" "" 200 "Get Top Kawaii Products"
+
+    # Note: Additional sale creation is already tested through complete receipt creation
 
     # Test Sales Stats by Product
     if [ -n "$PRODUCT_ID" ]; then
-        test_endpoint "GET" "/sales/stats/product/$PRODUCT_ID?start_date=2024-01-01&end_date=2024-12-31" "" 200 "Get Kawaii Sales Statistics"
+        test_endpoint "GET" "/sales/stats/product/$PRODUCT_ID?start_date=2024-01-01&end_date=2024-12-31" "" 200 "Get Kawaii Product Sales Stats"
     fi
 fi
 
@@ -479,9 +483,13 @@ echo -e "${PINK}🧹 === KAWAII CLEANUP TIME === 🧹${NC}"
 print_status "INFO" "Cleaning up test data with care! (◕‿◕)♡"
 
 # Delete in proper order to handle foreign key constraints
-# 1. Delete sales first (they reference store products and receipts)
-if [ -n "$STORE_PRODUCT_UPC" ] && [ -n "$RECEIPT_NUMBER" ]; then
-    test_endpoint "DELETE" "/sales/$STORE_PRODUCT_UPC/$RECEIPT_NUMBER" "" 200 "Delete Kawaii Sale"
+# 1. Delete all sales for receipts first (they reference store products and receipts)
+if [ -n "$RECEIPT_NUMBER" ]; then
+    test_endpoint "DELETE" "/sales/by-receipt/$RECEIPT_NUMBER" "" 200 "Delete All Sales for Kawaii Receipt"
+fi
+
+if [ -n "$RECEIPT_NUMBER_2" ]; then
+    test_endpoint "DELETE" "/sales/by-receipt/$RECEIPT_NUMBER_2" "" 200 "Delete All Sales for Second Kawaii Receipt"
 fi
 
 # 2. Delete receipts (they reference employees and customer cards)
@@ -490,7 +498,7 @@ if [ -n "$RECEIPT_NUMBER" ]; then
 fi
 
 if [ -n "$RECEIPT_NUMBER_2" ]; then
-    test_endpoint "DELETE" "/receipts/$RECEIPT_NUMBER_2" "" 200 "Delete Complete Kawaii Receipt"
+    test_endpoint "DELETE" "/receipts/$RECEIPT_NUMBER_2" "" 200 "Delete Second Kawaii Receipt"
 fi
 
 # 3. Delete store products (they reference products)

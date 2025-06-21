@@ -58,6 +58,24 @@ const Navbar = () => {
                 >
                   Receipts
                 </Link>
+                <Link
+                  to="/individuals/vlad"
+                  className="text-gray-700 hover:text-blue-500 transition"
+                >
+                  Vlad Queries
+                </Link>
+                <Link
+                  to="/individuals/arthur"
+                  className="text-gray-700 hover:text-blue-500 transition"
+                >
+                  Arthur Queries
+                </Link>
+                <Link
+                  to="/individuals/oleksii"
+                  className="text-gray-700 hover:text-blue-500 transition"
+                >
+                  Oleksii Queries
+                </Link>
 
                 {/* Manager-only navigation */}
                 {isManager && (

@@ -8,6 +8,9 @@ import StoreProductsPage from "./pages/StoreProducts";
 import CreateReceipt from "./pages/CreateReceipt";
 import Receipts from "./pages/Receipts";
 import ReceiptDetails from "./pages/ReceiptDetails";
+import IndividualsVlad from "./pages/IndividualsVlad";
+import IndividualsArthur from "./pages/IndividualsArthur";
+import IndividualsOleksii from "./pages/IndividualsOleksii";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -90,6 +93,30 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ReceiptDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/individuals/vlad"
+              element={
+                <ProtectedRoute>
+                  <IndividualsVlad />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/individuals/arthur"
+              element={
+                <ProtectedRoute>
+                  <IndividualsArthur />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/individuals/oleksii"
+              element={
+                <ProtectedRoute>
+                  <IndividualsOleksii />
                 </ProtectedRoute>
               }
             />
