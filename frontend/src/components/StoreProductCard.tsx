@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { StoreProductWithDetails } from "../types/store_product";
 import { updateProductDelivery } from "../api/store_products";
+import { useAuth } from "../contexts/AuthContext";
 
 interface StoreProductCardProps {
   storeProduct: StoreProductWithDetails;
@@ -15,6 +16,7 @@ const StoreProductCard = ({
   onDelete, 
   onDeliveryUpdate
 }: StoreProductCardProps) => {
+  const { isManager } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingDelivery, setIsUpdatingDelivery] = useState(false);
   const [quantityChange, setQuantityChange] = useState(0);
@@ -74,19 +76,23 @@ const StoreProductCard = ({
           <p className="text-sm text-gray-600 mt-1">UPC: {storeProduct.upc}</p>
         </div>
         <div className="flex space-x-2">
-          <button
-            onClick={() => onEdit(storeProduct)}
-            className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-          >
-            Edit
-          </button>
-          <button
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition disabled:opacity-50"
-          >
-            {isDeleting ? "Deleting..." : "Delete"}
-          </button>
+          {isManager && (
+            <>
+              <button
+                onClick={() => onEdit(storeProduct)}
+                className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+              >
+                Edit
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition disabled:opacity-50"
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </>
+          )}
         </div>
       </div>
       
@@ -136,36 +142,38 @@ const StoreProductCard = ({
         </div>
       )}
 
-      <div className="border-t pt-4">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center space-x-2">
-            <input
-              type="number"
-              value={quantityChange}
-              onChange={(e) => setQuantityChange(parseInt(e.target.value) || 0)}
-              placeholder="Quantity change"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="number"
-              value={newPrice}
-              onChange={(e) => setNewPrice(e.target.value)}
-              placeholder="New price (optional)"
-              min="0"
-              step="0.01"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              onClick={handleDeliveryUpdate}
-              disabled={isUpdatingDelivery || (quantityChange === 0 && newPrice === "")}
-              className="px-4 py-2 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition disabled:opacity-50"
-            >
-              {isUpdatingDelivery ? "Updating..." : "Update Stock & Price"}
-            </button>
+      {isManager && (
+        <div className="border-t pt-4">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center space-x-2">
+              <input
+                type="number"
+                value={quantityChange}
+                onChange={(e) => setQuantityChange(parseInt(e.target.value) || 0)}
+                placeholder="Quantity change"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <input
+                type="number"
+                value={newPrice}
+                onChange={(e) => setNewPrice(e.target.value)}
+                placeholder="New price (optional)"
+                min="0"
+                step="0.01"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                onClick={handleDeliveryUpdate}
+                disabled={isUpdatingDelivery || (quantityChange === 0 && newPrice === "")}
+                className="px-4 py-2 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition disabled:opacity-50"
+              >
+                {isUpdatingDelivery ? "Updating..." : "Update Stock & Price"}
+              </button>
+            </div>
+            {error && <div className="text-red-600 text-sm mt-1">{error}</div>}
           </div>
-          {error && <div className="text-red-600 text-sm mt-1">{error}</div>}
         </div>
-      </div>
+      )}
     </div>
   );
 };

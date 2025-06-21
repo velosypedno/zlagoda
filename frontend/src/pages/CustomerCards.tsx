@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { getCustomerCards, createCustomerCard, updateCustomerCard, deleteCustomerCard } from '../api/customer_cards';
 import type { CustomerCard, CustomerCardCreate } from '../types/customer_card';
 import { CustomerCard as CustomerCardComponent } from '../components/CustomerCard';
+import { useAuth } from '../contexts/AuthContext';
 
 const CustomerCards = () => {
+  const { isManager } = useAuth();
   const [customerCards, setCustomerCards] = useState<CustomerCard[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -132,12 +134,14 @@ const CustomerCards = () => {
             <option value="desc">Desc</option>
           </select>
         </div>
-        <button
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-          onClick={() => setIsCreating(true)}
-        >
-          Add New Card
-        </button>
+        {isManager && (
+          <button
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+            onClick={() => setIsCreating(true)}
+          >
+            Add New Card
+          </button>
+        )}
       </div>
 
       {error && (
@@ -146,7 +150,7 @@ const CustomerCards = () => {
         </div>
       )}
 
-      {isCreating && (
+      {isCreating && isManager && (
         <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-4 mb-4">
           <h2 className="text-lg font-semibold mb-4">New Customer Card</h2>
           <div className="grid grid-cols-1 gap-2 mb-4">
@@ -201,8 +205,8 @@ const CustomerCards = () => {
               <CustomerCardComponent
                 key={card.card_number}
                 customerCard={card}
-                onDelete={() => handleDelete(card.card_number)}
                 onUpdate={(updates: Partial<CustomerCard>) => handleUpdate(card.card_number, updates)}
+                onDelete={() => handleDelete(card.card_number)}
               />
             ))}
         </div>

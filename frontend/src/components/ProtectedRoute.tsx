@@ -1,33 +1,45 @@
-import { useEffect, useState } from 'react';
-import type { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ProtectedRouteProps {
-  children: ReactNode;
+  children: React.ReactNode;
+  requireAuth?: boolean;
+  requireManager?: boolean;
+  requireCashier?: boolean;
+  fallbackPath?: string;
 }
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const navigate = useNavigate();
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  requireAuth = true,
+  requireManager = false,
+  requireCashier = false,
+  fallbackPath = '/login',
+}) => {
+  const { isAuthenticated, isManager, isCashier, loading } = useAuth();
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-    } else {
-      setIsAuthenticated(true);
-    }
-  }, [navigate]);
-
-  if (isAuthenticated === null) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        <div className="text-lg">Loading...</div>
       </div>
     );
   }
 
-  return isAuthenticated ? <>{children}</> : null;
+  if (requireAuth && !isAuthenticated) {
+    return <Navigate to={fallbackPath} replace />;
+  }
+
+  if (requireManager && !isManager) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  if (requireCashier && !isCashier) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  return <>{children}</>;
 };
 
 export default ProtectedRoute; 

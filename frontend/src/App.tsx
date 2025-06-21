@@ -11,30 +11,41 @@ import CheckDetails from "./pages/CheckDetails";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Account from "./pages/Account";
+import Unauthorized from "./pages/Unauthorized";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { AuthProvider } from "./contexts/AuthContext";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Navbar />
-      <div className="pt-16">
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-          <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
-          <Route path="/categories" element={<ProtectedRoute><CategoriesPage /></ProtectedRoute>} />
-          <Route path="/employees" element={<ProtectedRoute><EmployeesPage /></ProtectedRoute>} />
-          <Route path="/customer-cards" element={<ProtectedRoute><CustomerCardsPage /></ProtectedRoute>} />
-          <Route path="/products" element={<ProtectedRoute><ProductsPage /></ProtectedRoute>} />
-          <Route path="/store-products" element={<ProtectedRoute><StoreProductsPage /></ProtectedRoute>} />
-          <Route path="/create-check" element={<ProtectedRoute><CreateCheck /></ProtectedRoute>} />
-          <Route path="/checks" element={<ProtectedRoute><Checks /></ProtectedRoute>} />
-          <Route path="/checks/:receipt_number" element={<ProtectedRoute><CheckDetails /></ProtectedRoute>} />
-        </Routes>
-      </div>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Navbar />
+        <div className="pt-16">
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
+            
+            {/* Public routes (require authentication) */}
+            <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+            <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+            <Route path="/categories" element={<ProtectedRoute><CategoriesPage /></ProtectedRoute>} />
+            <Route path="/customer-cards" element={<ProtectedRoute><CustomerCardsPage /></ProtectedRoute>} />
+            <Route path="/products" element={<ProtectedRoute><ProductsPage /></ProtectedRoute>} />
+            <Route path="/store-products" element={<ProtectedRoute><StoreProductsPage /></ProtectedRoute>} />
+            <Route path="/checks" element={<ProtectedRoute><Checks /></ProtectedRoute>} />
+            <Route path="/checks/:receipt_number" element={<ProtectedRoute><CheckDetails /></ProtectedRoute>} />
+            
+            {/* Manager-only routes */}
+            <Route path="/employees" element={<ProtectedRoute requireManager><EmployeesPage /></ProtectedRoute>} />
+            
+            {/* Cashier-only routes */}
+            <Route path="/create-check" element={<ProtectedRoute requireCashier><CreateCheck /></ProtectedRoute>} />
+          </Routes>
+        </div>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { type Category } from "../types/category";
+import { useAuth } from "../contexts/AuthContext";
 
 interface Props {
   category: Category;
@@ -8,6 +9,7 @@ interface Props {
 }
 
 const CategoryCard = ({ category, onDelete, onUpdate }: Props) => {
+  const { isManager } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(category.name);
 
@@ -36,45 +38,48 @@ const CategoryCard = ({ category, onDelete, onUpdate }: Props) => {
         </>
       )}
   
-      <div className="flex gap-2 mt-3 items-center min-h-[36px]">
-        {isEditing ? (
-          <>
-            <button
-              className="bg-green-500 text-white px-3 py-1 rounded"
-              onClick={handleSave}
-            >
-              Save
-            </button>
-            <button
-              className="bg-gray-300 text-gray-800 px-3 py-1 rounded"
-              onClick={handleCancel}
-            >
-              Cancel
-            </button>
-            <button
-              className="bg-red-500 text-white px-3 py-1 rounded"
-              onClick={onDelete}
-            >
-              Delete
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              className="bg-blue-500 text-white px-3 py-1 rounded"
-              onClick={() => setIsEditing(true)}
-            >
-              Edit
-            </button>
-            <button
-              className="bg-red-500 text-white px-3 py-1 rounded"
-              onClick={onDelete}
-            >
-              Delete
-            </button>
-          </>
-        )}
-      </div>
+      {/* Only show action buttons for managers */}
+      {isManager && (
+        <div className="flex gap-2 mt-3 items-center min-h-[36px]">
+          {isEditing ? (
+            <>
+              <button
+                className="bg-green-500 text-white px-3 py-1 rounded"
+                onClick={handleSave}
+              >
+                Save
+              </button>
+              <button
+                className="bg-gray-300 text-gray-800 px-3 py-1 rounded"
+                onClick={handleCancel}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-red-500 text-white px-3 py-1 rounded"
+                onClick={onDelete}
+              >
+                Delete
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                className="bg-blue-500 text-white px-3 py-1 rounded"
+                onClick={() => setIsEditing(true)}
+              >
+                Edit
+              </button>
+              <button
+                className="bg-red-500 text-white px-3 py-1 rounded"
+                onClick={onDelete}
+              >
+                Delete
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -4,8 +4,10 @@ import type { Category } from "../types/category";
 import { fetchProducts, fetchProductsByCategory, fetchProductsByName, createProduct, updateProduct, deleteProduct } from "../api/products";
 import { fetchCategories } from "../api/categories";
 import ProductCard from "../components/ProductCard";
+import { useAuth } from "../contexts/AuthContext";
 
 const Products = () => {
+  const { isManager } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -190,12 +192,14 @@ const Products = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Products</h1>
-        <button
-          onClick={() => setShowForm(true)}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
-        >
-          Add Product
-        </button>
+        {isManager && (
+          <button
+            onClick={() => setShowForm(true)}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+          >
+            Add Product
+          </button>
+        )}
       </div>
 
       {error && (
@@ -283,7 +287,7 @@ const Products = () => {
         </div>
       </div>
 
-      {showForm && (
+      {showForm && isManager && (
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <h2 className="text-xl font-semibold mb-4">
             {editingProduct ? "Edit Product" : "Add New Product"}

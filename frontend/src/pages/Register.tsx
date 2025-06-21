@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { register } from '../api/auth';
+import { useAuth } from '../contexts/AuthContext';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -22,6 +23,7 @@ const Register = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login: authLogin } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +58,7 @@ const Register = () => {
         zip_code: formData.zip_code,
       });
       
-      localStorage.setItem('token', response.token);
+      await authLogin(response.token);
       navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Registration failed');

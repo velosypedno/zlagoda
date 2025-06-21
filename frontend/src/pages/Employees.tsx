@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { fetchEmployees, deleteEmployee, updateEmployee, createEmployeeWithAuth } from "../api/employees";
 import type { Employee } from "../types/employee";
 import EmployeeCard from "../components/EmployeeCard";
+import { useAuth } from "../contexts/AuthContext";
 
 const EmployeesPage = () => {
+  const { isManager } = useAuth();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [newEmployee, setNewEmployee] = useState<Omit<Employee, 'employee_id'> & { login: string; password: string }>({
@@ -125,26 +127,33 @@ const EmployeesPage = () => {
         </select>
       </div>
       {error && <div className="mb-4 text-red-500">{error}</div>}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        <input name="empl_surname" value={newEmployee.empl_surname} onChange={handleNewChange} placeholder="Surname" className="border rounded px-3 py-2" />
-        <input name="empl_name" value={newEmployee.empl_name} onChange={handleNewChange} placeholder="Name" className="border rounded px-3 py-2" />
-        <input name="empl_patronymic" value={newEmployee.empl_patronymic} onChange={handleNewChange} placeholder="Patronymic" className="border rounded px-3 py-2" />
-        <select name="empl_role" value={newEmployee.empl_role} onChange={handleNewChange} className="border rounded px-3 py-2">
-          <option value="">Role</option>
-          <option value="Manager">Manager</option>
-          <option value="Cashier">Cashier</option>
-        </select>
-        <input name="salary" type="number" value={newEmployee.salary} onChange={handleNewChange} placeholder="Salary" className="border rounded px-3 py-2" />
-        <input name="date_of_birth" type="date" value={newEmployee.date_of_birth} onChange={handleNewChange} placeholder="Date of Birth" className="border rounded px-3 py-2" />
-        <input name="date_of_start" type="date" value={newEmployee.date_of_start} onChange={handleNewChange} placeholder="Date of Start" className="border rounded px-3 py-2" />
-        <input name="phone_number" value={newEmployee.phone_number} onChange={handleNewChange} placeholder="Phone Number" className="border rounded px-3 py-2" />
-        <input name="city" value={newEmployee.city} onChange={handleNewChange} placeholder="City" className="border rounded px-3 py-2" />
-        <input name="street" value={newEmployee.street} onChange={handleNewChange} placeholder="Street" className="border rounded px-3 py-2" />
-        <input name="zip_code" value={newEmployee.zip_code} onChange={handleNewChange} placeholder="Zip Code" className="border rounded px-3 py-2" />
-        <input name="login" value={newEmployee.login} onChange={handleNewChange} placeholder="Login" className="border rounded px-3 py-2" />
-        <input name="password" type="password" value={newEmployee.password} onChange={handleNewChange} placeholder="Password" className="border rounded px-3 py-2" />
-      </div>
-      <button onClick={handleCreate} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 mb-8">Add Employee</button>
+      
+      {/* Only show create form for managers */}
+      {isManager && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <input name="empl_surname" value={newEmployee.empl_surname} onChange={handleNewChange} placeholder="Surname" className="border rounded px-3 py-2" />
+            <input name="empl_name" value={newEmployee.empl_name} onChange={handleNewChange} placeholder="Name" className="border rounded px-3 py-2" />
+            <input name="empl_patronymic" value={newEmployee.empl_patronymic} onChange={handleNewChange} placeholder="Patronymic" className="border rounded px-3 py-2" />
+            <select name="empl_role" value={newEmployee.empl_role} onChange={handleNewChange} className="border rounded px-3 py-2">
+              <option value="">Role</option>
+              <option value="Manager">Manager</option>
+              <option value="Cashier">Cashier</option>
+            </select>
+            <input name="salary" type="number" value={newEmployee.salary} onChange={handleNewChange} placeholder="Salary" className="border rounded px-3 py-2" />
+            <input name="date_of_birth" type="date" value={newEmployee.date_of_birth} onChange={handleNewChange} placeholder="Date of Birth" className="border rounded px-3 py-2" />
+            <input name="date_of_start" type="date" value={newEmployee.date_of_start} onChange={handleNewChange} placeholder="Date of Start" className="border rounded px-3 py-2" />
+            <input name="phone_number" value={newEmployee.phone_number} onChange={handleNewChange} placeholder="Phone Number" className="border rounded px-3 py-2" />
+            <input name="city" value={newEmployee.city} onChange={handleNewChange} placeholder="City" className="border rounded px-3 py-2" />
+            <input name="street" value={newEmployee.street} onChange={handleNewChange} placeholder="Street" className="border rounded px-3 py-2" />
+            <input name="zip_code" value={newEmployee.zip_code} onChange={handleNewChange} placeholder="Zip Code" className="border rounded px-3 py-2" />
+            <input name="login" value={newEmployee.login} onChange={handleNewChange} placeholder="Login" className="border rounded px-3 py-2" />
+            <input name="password" type="password" value={newEmployee.password} onChange={handleNewChange} placeholder="Password" className="border rounded px-3 py-2" />
+          </div>
+          <button onClick={handleCreate} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 mb-8">Add Employee</button>
+        </>
+      )}
+      
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {Array.isArray(employees) && employees
           .filter(employee => {

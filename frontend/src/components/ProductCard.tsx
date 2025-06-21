@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Product } from "../types/product";
 import type { Category } from "../types/category";
+import { useAuth } from "../contexts/AuthContext";
 
 interface ProductCardProps {
   product: Product;
@@ -10,6 +11,7 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({ product, categories, onEdit, onDelete }: ProductCardProps) => {
+  const { isManager } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const category = categories.find(cat => cat.id === product.category_id);
@@ -32,19 +34,23 @@ const ProductCard = ({ product, categories, onEdit, onDelete }: ProductCardProps
           {product.name}
         </h3>
         <div className="flex space-x-2">
-          <button
-            onClick={() => onEdit(product)}
-            className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-          >
-            Edit
-          </button>
-          <button
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition disabled:opacity-50"
-          >
-            {isDeleting ? "Deleting..." : "Delete"}
-          </button>
+          {isManager && (
+            <>
+              <button
+                onClick={() => onEdit(product)}
+                className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+              >
+                Edit
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition disabled:opacity-50"
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </>
+          )}
         </div>
       </div>
       

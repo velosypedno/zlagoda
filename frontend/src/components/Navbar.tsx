@@ -1,17 +1,11 @@
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useAuth } from "../contexts/AuthContext";
 
 const Navbar = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    setIsAuthenticated(!!token);
-  }, []);
+  const { isAuthenticated, isManager, isCashier, logout, user } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    setIsAuthenticated(false);
+    logout();
     window.location.href = '/login';
   };
 
@@ -30,10 +24,19 @@ const Navbar = () => {
                 <Link to="/categories" className="text-gray-700 hover:text-blue-500 transition">Categories</Link>
                 <Link to="/products" className="text-gray-700 hover:text-blue-500 transition">Products</Link>
                 <Link to="/store-products" className="text-gray-700 hover:text-blue-500 transition">Store Products</Link>
-                <Link to="/employees" className="text-gray-700 hover:text-blue-500 transition">Employees</Link>
                 <Link to="/customer-cards" className="text-gray-700 hover:text-blue-500 transition">Customer Cards</Link>
                 <Link to="/checks" className="text-gray-700 hover:text-blue-500 transition">Checks</Link>
-                <Link to="/create-check" className="text-gray-700 hover:text-blue-500 transition">Create Check</Link>
+                
+                {/* Manager-only navigation */}
+                {isManager && (
+                  <Link to="/employees" className="text-gray-700 hover:text-blue-500 transition">Employees</Link>
+                )}
+                
+                {/* Cashier-only navigation */}
+                {isCashier && (
+                  <Link to="/create-check" className="text-gray-700 hover:text-blue-500 transition">Create Check</Link>
+                )}
+                
                 <Link to="/account" className="text-gray-700 hover:text-blue-500 transition">Account</Link>
                 <button
                   onClick={handleLogout}

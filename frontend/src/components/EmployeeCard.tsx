@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Employee } from "../types/employee";
+import { useAuth } from "../contexts/AuthContext";
 
 interface Props {
   employee: Employee;
@@ -8,6 +9,7 @@ interface Props {
 }
 
 const EmployeeCard = ({ employee, onDelete, onUpdate }: Props) => {
+  const { isManager } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState<Partial<Employee>>({ ...employee });
 
@@ -42,8 +44,8 @@ const EmployeeCard = ({ employee, onDelete, onUpdate }: Props) => {
           <input name="empl_patronymic" value={form.empl_patronymic || ""} onChange={handleChange} className="border p-1 rounded" placeholder="Patronymic" />
           <select name="empl_role" value={form.empl_role || ""} onChange={handleChange} className="border p-1 rounded">
             <option value="">Role</option>
-            <option value="manager">Manager</option>
-            <option value="cashier">Cashier</option>
+            <option value="Manager">Manager</option>
+            <option value="Cashier">Cashier</option>
           </select>
           <input name="salary" type="number" value={form.salary || ""} onChange={handleChange} className="border p-1 rounded" placeholder="Salary" />
           <input name="date_of_birth" type="date" value={form.date_of_birth || ""} onChange={handleChange} className="border p-1 rounded" placeholder="Date of Birth" />
@@ -65,20 +67,24 @@ const EmployeeCard = ({ employee, onDelete, onUpdate }: Props) => {
           <div><span className="font-medium">Zip:</span> {employee.zip_code || 'N/A'}</div>
         </div>
       )}
-      <div className="flex gap-2 mt-2 justify-end">
-        {isEditing ? (
-          <>
-            <button className="bg-green-500 text-white px-3 py-1 rounded" onClick={handleSave}>Save</button>
-            <button className="bg-gray-300 text-gray-800 px-3 py-1 rounded" onClick={handleCancel}>Cancel</button>
-            <button className="bg-red-500 text-white px-3 py-1 rounded" onClick={onDelete}>Delete</button>
-          </>
-        ) : (
-          <>
-            <button className="bg-blue-500 text-white px-3 py-1 rounded" onClick={() => setIsEditing(true)}>Edit</button>
-            <button className="bg-red-500 text-white px-3 py-1 rounded" onClick={onDelete}>Delete</button>
-          </>
-        )}
-      </div>
+      
+      {/* Only show action buttons for managers */}
+      {isManager && (
+        <div className="flex gap-2 mt-2 justify-end">
+          {isEditing ? (
+            <>
+              <button className="bg-green-500 text-white px-3 py-1 rounded" onClick={handleSave}>Save</button>
+              <button className="bg-gray-300 text-gray-800 px-3 py-1 rounded" onClick={handleCancel}>Cancel</button>
+              <button className="bg-red-500 text-white px-3 py-1 rounded" onClick={onDelete}>Delete</button>
+            </>
+          ) : (
+            <>
+              <button className="bg-blue-500 text-white px-3 py-1 rounded" onClick={() => setIsEditing(true)}>Edit</button>
+              <button className="bg-red-500 text-white px-3 py-1 rounded" onClick={onDelete}>Delete</button>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 };
