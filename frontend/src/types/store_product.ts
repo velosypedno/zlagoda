@@ -8,7 +8,6 @@ export interface StoreProduct {
 }
 
 export interface StoreProductCreate {
-  upc: string;
   upc_prom?: string;
   product_id: number;
   selling_price: number;

@@ -33,7 +33,6 @@ const StoreProducts = () => {
   const [editingStoreProduct, setEditingStoreProduct] =
     useState<StoreProductWithDetails | null>(null);
   const [formData, setFormData] = useState<StoreProductCreate>({
-    upc: "",
     upc_prom: "",
     product_id: 0,
     selling_price: 0,
@@ -203,17 +202,11 @@ const StoreProducts = () => {
     e.preventDefault();
 
     if (
-      !formData.upc ||
       formData.product_id === 0 ||
       formData.selling_price <= 0 ||
       formData.products_number < 0
     ) {
       setError("Please fill in all required fields correctly");
-      return;
-    }
-
-    if (formData.upc.length !== 12) {
-      setError("UPC must be exactly 12 characters");
       return;
     }
 
@@ -228,13 +221,15 @@ const StoreProducts = () => {
         };
         await updateStoreProduct(editingStoreProduct.upc, updateData);
       } else {
-        await createStoreProduct(formData);
+        await createStoreProduct({
+          ...formData,
+          upc_prom: formData.upc_prom || undefined,
+        });
       }
 
       setShowForm(false);
       setEditingStoreProduct(null);
       setFormData({
-        upc: "",
         upc_prom: "",
         product_id: 0,
         selling_price: 0,
@@ -252,7 +247,6 @@ const StoreProducts = () => {
   const handleEdit = (storeProduct: StoreProductWithDetails) => {
     setEditingStoreProduct(storeProduct);
     setFormData({
-      upc: storeProduct.upc,
       upc_prom: storeProduct.upc_prom || "",
       product_id: storeProduct.product_id,
       selling_price: storeProduct.selling_price,
@@ -277,7 +271,6 @@ const StoreProducts = () => {
     setShowForm(false);
     setEditingStoreProduct(null);
     setFormData({
-      upc: "",
       upc_prom: "",
       product_id: 0,
       selling_price: 0,
@@ -304,7 +297,6 @@ const StoreProducts = () => {
             entityType="Store Products"
             apiEndpoint="/api/store-products/details"
             title="Store Products Report"
-            filename="store-products-export.pdf"
             columns={[
               { key: "upc", label: "UPC", width: "15%" },
               { key: "product_name", label: "Product", width: "25%" },
@@ -451,60 +443,56 @@ const StoreProducts = () => {
 
       {showForm && isManager && (
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">
-            {editingStoreProduct
-              ? "Edit Store Product"
-              : "Add New Store Product"}
-          </h2>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium text-gray-900">
+              {editingStoreProduct
+                ? `Edit Store Product (UPC: ${editingStoreProduct.upc})`
+                : "Add New Store Product"}
+            </h3>
+            <button
+              onClick={handleCancel}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
+              </svg>
+            </button>
+          </div>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  UPC * (12 characters)
-                </label>
-                <input
-                  type="text"
-                  value={formData.upc}
-                  onChange={(e) =>
-                    setFormData({ ...formData, upc: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  maxLength={12}
-                  required
-                  disabled={!!editingStoreProduct}
-                />
-              </div>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Product *
                 </label>
                 <select
+                  name="product_id"
                   value={formData.product_id}
-                  onChange={(e) => {
-                    console.log("Product selection changed:", e.target.value);
-                    console.log("Products array at selection:", products);
-                    const selectedProduct = products.find(
-                      (p) => p.product_id === parseInt(e.target.value),
-                    );
-                    console.log("Selected product object:", selectedProduct);
+                  onChange={(e) =>
                     setFormData({
                       ...formData,
-                      product_id: parseInt(e.target.value),
-                    });
-                  }}
+                      product_id: parseInt(e.target.value) || 0,
+                    })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 >
-                  <option value={0}>Select a product</option>
-                  {products.map((product) => (
-                    <option
-                      key={`product-${product.product_id}`}
-                      value={product.product_id}
-                    >
-                      {product.name} (ID: {product.product_id})
+                  <option value={0} disabled>
+                    Select a product
+                  </option>
+                  {products.map((p) => (
+                    <option key={p.product_id} value={p.product_id}>
+                      {p.name}
                     </option>
                   ))}
                 </select>
@@ -516,8 +504,9 @@ const StoreProducts = () => {
                 </label>
                 <input
                   type="number"
-                  step="0.01"
                   min="0"
+                  step="0.01"
+                  name="selling_price"
                   value={formData.selling_price}
                   onChange={(e) =>
                     setFormData({
@@ -539,6 +528,7 @@ const StoreProducts = () => {
                 <input
                   type="number"
                   min="0"
+                  name="products_number"
                   value={formData.products_number}
                   onChange={(e) =>
                     setFormData({
@@ -551,36 +541,55 @@ const StoreProducts = () => {
                 />
               </div>
 
-              <div className="flex items-center">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.promotional_product}
-                    onChange={(e) =>
-                      handlePromotionalCheckboxChange(e.target.checked)
-                    }
-                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <span className="text-sm font-medium text-gray-700">
-                    Promotional Product
-                  </span>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Promotional UPC
                 </label>
+                <input
+                  type="text"
+                  name="upc_prom"
+                  value={formData.upc_prom}
+                  onChange={(e) =>
+                    setFormData({ ...formData, upc_prom: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  maxLength={12}
+                />
               </div>
             </div>
 
-            <div className="flex space-x-4">
+            <div className="flex items-center">
+              <input
+                id="promotional_product"
+                name="promotional_product"
+                type="checkbox"
+                checked={formData.promotional_product}
+                onChange={(e) =>
+                  handlePromotionalCheckboxChange(e.target.checked)
+                }
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label
+                htmlFor="promotional_product"
+                className="ml-2 block text-sm text-gray-900"
+              >
+                Is this a promotional product?
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 transition"
+              >
+                Cancel
+              </button>
               <button
                 type="submit"
                 className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
               >
                 {editingStoreProduct ? "Update" : "Create"}
-              </button>
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition"
-              >
-                Cancel
               </button>
             </div>
           </form>

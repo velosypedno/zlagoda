@@ -159,7 +159,6 @@ const CustomerCards = () => {
             entityType="Customer Cards"
             apiEndpoint="/api/customer-cards"
             title="Customer Cards Report"
-            filename="customer-cards-export.pdf"
             columns={[
               { key: "card_number", label: "Card #", width: "15%" },
               { key: "cust_surname", label: "Surname", width: "20%" },
