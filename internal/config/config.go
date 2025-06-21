@@ -10,11 +10,11 @@ import (
 )
 
 type Config struct {
-	DB_DRIVER string
-	DB_DSN    string
-	PORT      string
-	VAT_RATE  float64
-	SECRET_KEY string
+	DB_DRIVER    string
+	DB_DSN       string
+	PORT         string
+	VAT_RATE     float64
+	SECRET_KEY   string
 }
 
 func Load() *Config {
@@ -38,9 +38,9 @@ func Load() *Config {
 			os.Getenv("DB_PASSWORD"),
 			os.Getenv("DB_NAME"),
 		),
-		DB_DRIVER: os.Getenv("DB_DRIVER"),
-		PORT:      os.Getenv("PORT"),
-		VAT_RATE:  vatRate,
-		SECRET_KEY: os.Getenv("SECRET_KEY"),
+		DB_DRIVER:    os.Getenv("DB_DRIVER"),
+		PORT:         os.Getenv("PORT"),
+		VAT_RATE:     vatRate,
+		SECRET_KEY:   os.Getenv("SECRET_KEY"),
 	}
 }

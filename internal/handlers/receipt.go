@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -30,15 +31,29 @@ func NewReceiptCreatePOSTHandler(service receiptCreator, cfg *config.Config) gin
 			return
 		}
 
-		printDate, err := time.Parse("2006-01-02", *req.PrintDate)
-		if err != nil {
-			log.Printf("[ReceiptCreatePOST] Invalid print_date: %v", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid print date format"})
-			return
+		var printDate time.Time
+		var parseError error = fmt.Errorf("no valid date format found")
+
+		// Try multiple date formats
+		formats := []string{
+			"2006-01-02",           // Date only
+			"2006-01-02T15:04:05",  // ISO format without timezone
+			"2006-01-02T15:04:05Z", // ISO format with Z
+			"2006-01-02 15:04:05",  // YYYY-MM-DD HH:MM:SS
+			"2006-01-02 15:04",     // YYYY-MM-DD HH:MM
 		}
-		if printDate.After(time.Now()) {
-			log.Printf("[ReceiptCreatePOST] Invalid print_date: %v", printDate)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid print date"})
+
+		for _, format := range formats {
+			if parsedTime, parseErr := time.Parse(format, *req.PrintDate); parseErr == nil {
+				printDate = parsedTime
+				parseError = nil
+				break
+			}
+		}
+
+		if parseError != nil {
+			log.Printf("[ReceiptCreatePOST] Failed to parse print_date '%s'", *req.PrintDate)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid print date format"})
 			return
 		}
 
@@ -92,15 +107,29 @@ func NewReceiptCreateCompletePOSTHandler(service receiptCompleteCreator, cfg *co
 			return
 		}
 
-		printDate, err := time.Parse("2006-01-02", *req.PrintDate)
-		if err != nil {
-			log.Printf("[ReceiptCreateCompletePOST] Invalid print_date: %v", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid print date format"})
-			return
+		var printDate time.Time
+		var parseError error = fmt.Errorf("no valid date format found")
+
+		// Try multiple date formats
+		formats := []string{
+			"2006-01-02",           // Date only
+			"2006-01-02T15:04:05",  // ISO format without timezone
+			"2006-01-02T15:04:05Z", // ISO format with Z
+			"2006-01-02 15:04:05",  // YYYY-MM-DD HH:MM:SS
+			"2006-01-02 15:04",     // YYYY-MM-DD HH:MM
 		}
-		if printDate.After(time.Now()) {
-			log.Printf("[ReceiptCreateCompletePOST] Invalid print_date: %v", printDate)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid print date"})
+
+		for _, format := range formats {
+			if parsedTime, parseErr := time.Parse(format, *req.PrintDate); parseErr == nil {
+				printDate = parsedTime
+				parseError = nil
+				break
+			}
+		}
+
+		if parseError != nil {
+			log.Printf("[ReceiptCreateCompletePOST] Failed to parse print_date '%s'", *req.PrintDate)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid print date format"})
 			return
 		}
 
@@ -164,7 +193,7 @@ func NewReceiptRetrieveGETHandler(service receiptReader) gin.HandlerFunc {
 			return
 		}
 
-		printDate := receipt.PrintDate.Format("2006-01-02")
+		printDate := receipt.PrintDate.Format("2006-01-02 15:04:05")
 
 		resp := response{
 			ReceiptNumber: receipt.ReceiptNumber,
@@ -198,7 +227,7 @@ func NewReceiptsListGETHandler(service receiptReader) gin.HandlerFunc {
 
 		var resp []responseItem
 		for _, receipt := range receipts {
-			printDate := receipt.PrintDate.Format("2006-01-02")
+			printDate := receipt.PrintDate.Format("2006-01-02 15:04:05")
 			resp = append(resp, responseItem{
 				ReceiptNumber: receipt.ReceiptNumber,
 				EmployeeId:    receipt.EmployeeId,
@@ -266,7 +295,7 @@ func NewReceiptUpdatePATCHHandler(service receiptUpdater, cfg *config.Config) gi
 			return
 		}
 
-		currentPrintDateStr := receiptCurrentState.PrintDate.Format("2006-01-02")
+		currentPrintDateStr := receiptCurrentState.PrintDate.Format("2006-01-02 15:04:05")
 		if req.EmployeeId == nil {
 			req.EmployeeId = receiptCurrentState.EmployeeId
 		}
@@ -280,13 +309,29 @@ func NewReceiptUpdatePATCHHandler(service receiptUpdater, cfg *config.Config) gi
 			req.TotalSum = receiptCurrentState.TotalSum
 		}
 
-		printDate, err := time.Parse("2006-01-02", *req.PrintDate)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid print date format"})
-			return
+		var printDate time.Time
+		var parseError error = fmt.Errorf("no valid date format found")
+
+		// Try multiple date formats
+		formats := []string{
+			"2006-01-02",           // Date only
+			"2006-01-02T15:04:05",  // ISO format without timezone
+			"2006-01-02T15:04:05Z", // ISO format with Z
+			"2006-01-02 15:04:05",  // YYYY-MM-DD HH:MM:SS
+			"2006-01-02 15:04",     // YYYY-MM-DD HH:MM
 		}
-		if printDate.After(time.Now()) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid print date"})
+
+		for _, format := range formats {
+			if parsedTime, parseErr := time.Parse(format, *req.PrintDate); parseErr == nil {
+				printDate = parsedTime
+				parseError = nil
+				break
+			}
+		}
+
+		if parseError != nil {
+			log.Printf("[ReceiptUpdatePATCH] Failed to parse print_date '%s'", *req.PrintDate)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid print date format"})
 			return
 		}
 

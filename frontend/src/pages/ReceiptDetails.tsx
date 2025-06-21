@@ -117,6 +117,24 @@ const ReceiptDetails: React.FC = () => {
     );
   }
 
+  // Format timestamp to show date and time
+  const formatTimestamp = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString("en-US", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      });
+    } catch {
+      return dateString; // fallback to original string if parsing fails
+    }
+  };
+
   return (
     <div className="max-w-lg mx-auto p-6 bg-white rounded shadow mt-6">
       <div className="mb-4 flex justify-between items-center">
@@ -127,7 +145,7 @@ const ReceiptDetails: React.FC = () => {
       </div>
 
       <div className="mb-2 text-sm text-gray-600">
-        Date: {receipt.print_date}
+        Timestamp: {formatTimestamp(receipt.print_date)}
       </div>
 
       <div className="mb-2 text-sm text-gray-600">

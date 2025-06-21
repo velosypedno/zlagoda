@@ -58,7 +58,38 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({
     if (typeof value === "object") {
       return JSON.stringify(value);
     }
-    return String(value);
+
+    const stringValue = String(value);
+
+    // Check if this looks like a timestamp (contains both date and time)
+    if (stringValue.match(/^\d{4}-\d{2}-\d{2}[\s\T]\d{2}:\d{2}:\d{2}/)) {
+      try {
+        const date = new Date(stringValue);
+        return date.toLocaleString("en-US", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+        });
+      } catch {
+        return stringValue; // fallback to original if parsing fails
+      }
+    }
+
+    // Check if the value looks like a date only (YYYY-MM-DD)
+    if (stringValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      try {
+        const date = new Date(stringValue);
+        return date.toLocaleDateString();
+      } catch {
+        return stringValue; // fallback to original if parsing fails
+      }
+    }
+
+    return stringValue;
   };
 
   const getNestedValue = (

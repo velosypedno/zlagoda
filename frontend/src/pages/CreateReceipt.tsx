@@ -92,11 +92,8 @@ const CreateReceipt = () => {
       return;
     }
     try {
-      const today = new Date();
-      const yyyy = today.getFullYear();
-      const mm = String(today.getMonth() + 1).padStart(2, "0");
-      const dd = String(today.getDate()).padStart(2, "0");
-      const print_date = `${yyyy}-${mm}-${dd}`;
+      const now = new Date();
+      const print_date = now.toISOString().slice(0, 19).replace("T", " ");
       const receipt: ReceiptCreateComplete = {
         employee_id: user.employee_id,
         card_number: cardNumber || null,

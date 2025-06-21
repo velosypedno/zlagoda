@@ -45,8 +45,11 @@ const Receipts: React.FC = () => {
 
   // Filter receipts based on current filter states
   const filteredReceipts = receipts.filter((receipt) => {
+    // Extract date part from timestamp for filtering
+    const receiptDate = receipt.print_date.split(" ")[0]; // Gets "2024-01-15" from "2024-01-15 14:30:00"
+
     // Filter by today
-    if (filterToday && receipt.print_date !== getTodayDate()) {
+    if (filterToday && receiptDate !== getTodayDate()) {
       return false;
     }
 
@@ -56,10 +59,10 @@ const Receipts: React.FC = () => {
     }
 
     // Filter by date range
-    if (filterDateFrom && receipt.print_date < filterDateFrom) {
+    if (filterDateFrom && receiptDate < filterDateFrom) {
       return false;
     }
-    if (filterDateTo && receipt.print_date > filterDateTo) {
+    if (filterDateTo && receiptDate > filterDateTo) {
       return false;
     }
 
@@ -71,6 +74,24 @@ const Receipts: React.FC = () => {
     const employee = employees.find((emp) => emp.employee_id === employeeId);
     if (!employee) return employeeId;
     return `${employee.empl_surname} ${employee.empl_name} ${employee.empl_patronymic || ""}`.trim();
+  };
+
+  // Format timestamp to show date and time
+  const formatTimestamp = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString("en-US", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      });
+    } catch {
+      return dateString; // fallback to original string if parsing fails
+    }
   };
 
   // Clear all filters
@@ -95,7 +116,7 @@ const Receipts: React.FC = () => {
               { key: "receipt_number", label: "Receipt #", width: "15%" },
               { key: "employee_id", label: "Cashier ID", width: "15%" },
               { key: "card_number", label: "Card #", width: "15%" },
-              { key: "print_date", label: "Date", width: "15%" },
+              { key: "print_date", label: "Timestamp", width: "15%" },
               { key: "sum_total", label: "Total", width: "12%" },
               { key: "vat", label: "VAT", width: "13%" },
             ]}
@@ -195,7 +216,7 @@ const Receipts: React.FC = () => {
                 <th className="px-3 py-2 border">Receipt #</th>
                 <th className="px-3 py-2 border">Cashier</th>
                 <th className="px-3 py-2 border">Card #</th>
-                <th className="px-3 py-2 border">Print Date</th>
+                <th className="px-3 py-2 border">Timestamp</th>
                 <th className="px-3 py-2 border">Total</th>
                 <th className="px-3 py-2 border">VAT</th>
                 <th className="px-3 py-2 border">Actions</th>
@@ -220,7 +241,9 @@ const Receipts: React.FC = () => {
                       <span className="text-gray-400">—</span>
                     )}
                   </td>
-                  <td className="px-3 py-2 border">{receipt.print_date}</td>
+                  <td className="px-3 py-2 border">
+                    {formatTimestamp(receipt.print_date)}
+                  </td>
                   <td className="px-3 py-2 border">
                     {receipt.sum_total.toFixed(2)}
                   </td>
