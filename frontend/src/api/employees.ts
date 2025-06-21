@@ -8,6 +8,9 @@ export const fetchEmployee = (id: string) => axios.get<Employee>(`/api/employees
 export const createEmployee = (employee: Omit<Employee, 'employee_id'>) =>
   axios.post<Employee>("/api/employees", employee);
 
+export const createEmployeeWithAuth = (employee: Omit<Employee, 'employee_id'> & { login: string; password: string }) =>
+  axios.post<Employee>("/api/employees/with-auth", employee);
+
 export const updateEmployee = (id: string, employee: Partial<Omit<Employee, 'employee_id'>>) =>
   axios.patch(`/api/employees/${id}`, employee);
 

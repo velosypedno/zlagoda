@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Product } from "../types/product";
 import type { Category } from "../types/category";
+import { useAuth } from "../contexts/AuthContext";
 
 interface ProductCardProps {
   product: Product;
@@ -9,21 +10,17 @@ interface ProductCardProps {
   onDelete: (id: number) => void;
 }
 
-const ProductCard = ({
-  product,
-  categories,
-  onEdit,
-  onDelete,
-}: ProductCardProps) => {
+const ProductCard = ({ product, categories, onEdit, onDelete }: ProductCardProps) => {
+  const { isManager } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const category = categories.find((cat) => cat.id === product.category_id);
+  const category = categories.find(cat => cat.id === product.category_id);
 
   const handleDelete = async () => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       setIsDeleting(true);
       try {
-        await onDelete(product.product_id);
+        await onDelete(product.id);
       } finally {
         setIsDeleting(false);
       }
@@ -37,37 +34,39 @@ const ProductCard = ({
           {product.name}
         </h3>
         <div className="flex space-x-2">
-          <button
-            onClick={() => onEdit(product)}
-            className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-          >
-            Edit
-          </button>
-          <button
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition disabled:opacity-50"
-          >
-            {isDeleting ? "Deleting..." : "Delete"}
-          </button>
+          {isManager && (
+            <>
+              <button
+                onClick={() => onEdit(product)}
+                className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+              >
+                Edit
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition disabled:opacity-50"
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </>
+          )}
         </div>
       </div>
-
+      
       <div className="space-y-2">
         <div>
-          <span className="text-sm font-medium text-gray-600">
-            Characteristics:
-          </span>
+          <span className="text-sm font-medium text-gray-600">Characteristics:</span>
           <p className="text-gray-800 mt-1">{product.characteristics}</p>
         </div>
-
+        
         <div>
           <span className="text-sm font-medium text-gray-600">Category:</span>
           <p className="text-gray-800 mt-1">
             {category ? category.name : `ID: ${product.category_id}`}
           </p>
         </div>
-
+        
         <div>
           <span className="text-sm font-medium text-gray-600">Product ID:</span>
           <p className="text-gray-800 mt-1">{product.product_id}</p>
@@ -77,4 +76,4 @@ const ProductCard = ({
   );
 };
 
-export default ProductCard;
+export default ProductCard; 

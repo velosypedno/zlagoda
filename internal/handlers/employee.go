@@ -13,6 +13,7 @@ import (
 
 type employeeCreator interface {
 	CreateEmployee(c models.EmployeeCreate) (string, error)
+	CreateEmployeeWithAuth(c models.EmployeeCreate, login string, hashedPassword string) (string, error)
 }
 
 func NewEmployeeCreatePOSTHandler(service employeeCreator) gin.HandlerFunc {
@@ -199,17 +200,22 @@ type employeeRemover interface {
 func NewEmployeeDeleteDELETEHandler(service employeeRemover) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var id string = c.Param("id")
+		log.Printf("[EmployeeDeleteDELETE] Attempting to delete employee with ID: %s", id)
+		
 		if len(id) != 10 {
+			log.Printf("[EmployeeDeleteDELETE] Invalid employee ID length: %d, expected 10", len(id))
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid employee ID"})
 			return
 		}
 
 		err := service.DeleteEmployee(id)
 		if err != nil {
+			log.Printf("[EmployeeDeleteDELETE] Service error: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete employee: " + err.Error()})
 			return
 		}
 
+		log.Printf("[EmployeeDeleteDELETE] Successfully deleted employee with ID: %s", id)
 		c.JSON(http.StatusOK, gin.H{"message": "Employee deleted successfully"})
 	}
 }
@@ -333,5 +339,98 @@ func NewEmployeeUpdatePATCHHandler(service employeeUpdater) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{"message": "Employee updated successfully"})
+	}
+}
+
+type employeeCreatorWithAuth interface {
+	CreateEmployeeWithAuth(c models.EmployeeCreate, login string, hashedPassword string) (string, error)
+}
+
+func NewEmployeeCreateWithAuthPOSTHandler(service employeeCreatorWithAuth) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		type request struct {
+			Login       string  `json:"login" binding:"required"`
+			Password    string  `json:"password" binding:"required,min=6"`
+			Surname     *string `json:"empl_surname" binding:"omitempty,required,max=50"`
+			Name        *string `json:"empl_name" binding:"omitempty,required,max=50"`
+			Patronymic  *string `json:"empl_patronymic" binding:"omitempty,max=50"`
+			Role        *string `json:"empl_role" binding:"omitempty,required,max=10"`
+			Salary      *float64 `json:"salary" binding:"omitempty,required,gte=0"`
+			DateOfBirth *string `json:"date_of_birth" binding:"omitempty,required"`
+			DateOfStart *string `json:"date_of_start" binding:"omitempty,required"`
+			PhoneNumber *string `json:"phone_number" binding:"omitempty,required,len=13,startswith=+380"`
+			City        *string `json:"city" binding:"omitempty,required,max=50"`
+			Street      *string `json:"street" binding:"omitempty,required,max=50"`
+			ZipCode     *string `json:"zip_code" binding:"omitempty,required,max=9"`
+		}
+		var req request
+		if err := c.ShouldBindJSON(&req); err != nil {
+			log.Printf("[EmployeeCreateWithAuthPOST] BindJSON error: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: " + err.Error()})
+			return
+		}
+
+		// Validate role
+		if req.Role != nil && *req.Role != "Manager" && *req.Role != "Cashier" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role. Must be 'Manager' or 'Cashier'"})
+			return
+		}
+
+		birthDate, err := time.Parse("2006-01-02", *req.DateOfBirth)
+		if err != nil {
+			log.Printf("[EmployeeCreateWithAuthPOST] Invalid date_of_birth: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid date of birth format"})
+			return
+		}
+		startDate, err := time.Parse("2006-01-02", *req.DateOfStart)
+		if err != nil {
+			log.Printf("[EmployeeCreateWithAuthPOST] Invalid date_of_start: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid date of start format"})
+			return
+		}
+		now := time.Now()
+		eighteenYearsOld := birthDate.AddDate(18, 0, 0)
+		if eighteenYearsOld.After(now) || eighteenYearsOld.After(startDate) {
+			log.Printf("[EmployeeCreateWithAuthPOST] Invalid dates: birthDate=%v, startDate=%v", birthDate, startDate)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid dates"})
+			return
+		}
+
+		if !utils.IsSalaryValid(*req.Salary) {
+			log.Printf("[EmployeeCreateWithAuthPOST] Invalid salary: %v", *req.Salary)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: invalid salary"})
+			return
+		}
+
+		// Hash the password
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+		if err != nil {
+			log.Printf("[EmployeeCreateWithAuthPOST] Password hashing error: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process password"})
+			return
+		}
+
+		model := models.EmployeeCreate{
+			Surname:     req.Surname,
+			Name:        req.Name,
+			Patronymic:  req.Patronymic,
+			Role:        req.Role,
+			Salary:      req.Salary,
+			DateOfBirth: &birthDate,
+			DateOfStart: &startDate,
+			PhoneNumber: req.PhoneNumber,
+			City:        req.City,
+			Street:      req.Street,
+			ZipCode:     req.ZipCode,
+		}
+
+		id, err := service.CreateEmployeeWithAuth(model, req.Login, string(hashedPassword))
+		if err != nil {
+			log.Printf("[EmployeeCreateWithAuthPOST] Service error: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create employee: " + err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusCreated, gin.H{"id": id})
 	}
 }

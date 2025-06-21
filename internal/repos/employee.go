@@ -3,12 +3,13 @@ package repos
 import (
 	"database/sql"
 	"fmt"
+	"log"
 
 	"github.com/velosypedno/zlagoda/internal/models"
 	"github.com/velosypedno/zlagoda/internal/utils"
 )
 
-func getNewEmployeeId(r *EmployeeRepo) (string, error) {
+func (r *employeeRepo) getNewEmployeeId() (string, error) {
 	const maxRetries = 10
 
 	for i := 0; i < maxRetries; i++ {
@@ -31,17 +32,27 @@ func getNewEmployeeId(r *EmployeeRepo) (string, error) {
 	return "", fmt.Errorf("failed to generate unique employee ID after %d attempts", maxRetries)
 }
 
-type EmployeeRepo struct {
+type EmployeeRepo interface {
+	CreateEmployee(c models.EmployeeCreate) (string, error)
+	CreateEmployeeWithAuth(c models.EmployeeCreate, login string, hashedPassword string) (string, error)
+	RetrieveEmployeeById(id string) (models.EmployeeRetrieve, error)
+	RetrieveEmployees() ([]models.EmployeeRetrieve, error)
+	DeleteEmployee(id string) error
+	UpdateEmployee(id string, c models.EmployeeUpdate) error
+	GetByLogin(login string) (models.EmployeeAuth, error)
+}
+
+type employeeRepo struct {
 	db *sql.DB
 }
 
-func NewEmployeeRepo(db *sql.DB) *EmployeeRepo {
-	return &EmployeeRepo{
+func NewEmployeeRepo(db *sql.DB) EmployeeRepo {
+	return &employeeRepo{
 		db: db,
 	}
 }
 
-func (r *EmployeeRepo) CreateEmployee(c models.EmployeeCreate) (string, error) {
+func (r *employeeRepo) CreateEmployee(c models.EmployeeCreate) (string, error) {
 	query := `
 		INSERT INTO employee (
 			employee_id,
@@ -60,7 +71,7 @@ func (r *EmployeeRepo) CreateEmployee(c models.EmployeeCreate) (string, error) {
 		RETURNING employee_id
 	`
 
-	id, err := getNewEmployeeId(r)
+	id, err := r.getNewEmployeeId()
 	if err != nil {
 		return "", err
 	}
@@ -83,10 +94,57 @@ func (r *EmployeeRepo) CreateEmployee(c models.EmployeeCreate) (string, error) {
 	return id, err
 }
 
-func (r *EmployeeRepo) RetrieveEmployeeById(id string) (models.EmployeeRetrieve, error) {
+func (r *employeeRepo) CreateEmployeeWithAuth(c models.EmployeeCreate, login string, hashedPassword string) (string, error) {
+	query := `
+		INSERT INTO employee (
+			employee_id,
+			login,
+			hashed_password,
+			empl_surname,
+			empl_name,
+			empl_patronymic,
+			empl_role,
+			salary,
+			date_of_birth,
+			date_of_start,
+			phone_number,
+			city,
+			street,
+			zip_code
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+		RETURNING employee_id
+	`
+
+	id, err := r.getNewEmployeeId()
+	if err != nil {
+		return "", err
+	}
+	err = r.db.QueryRow(
+		query,
+		id,
+		login,
+		hashedPassword,
+		c.Surname,
+		c.Name,
+		c.Patronymic,
+		c.Role,
+		c.Salary,
+		c.DateOfBirth,
+		c.DateOfStart,
+		c.PhoneNumber,
+		c.City,
+		c.Street,
+		c.ZipCode,
+	).Scan(&id)
+
+	return id, err
+}
+
+func (r *employeeRepo) RetrieveEmployeeById(id string) (models.EmployeeRetrieve, error) {
 	query := `
 		SELECT
 			employee_id,
+			login,
 			empl_surname,
 			empl_name,
 			empl_patronymic,
@@ -104,6 +162,7 @@ func (r *EmployeeRepo) RetrieveEmployeeById(id string) (models.EmployeeRetrieve,
 	var employee models.EmployeeRetrieve
 	err := r.db.QueryRow(query, id).Scan(
 		&employee.ID,
+		&employee.Login,
 		&employee.Surname,
 		&employee.Name,
 		&employee.Patronymic,
@@ -123,10 +182,11 @@ func (r *EmployeeRepo) RetrieveEmployeeById(id string) (models.EmployeeRetrieve,
 	return employee, nil
 }
 
-func (r *EmployeeRepo) RetrieveEmployees() ([]models.EmployeeRetrieve, error) {
+func (r *employeeRepo) RetrieveEmployees() ([]models.EmployeeRetrieve, error) {
 	query := `
 		SELECT
 			employee_id,
+			login,
 			empl_surname,
 			empl_name,
 			empl_patronymic,
@@ -151,6 +211,7 @@ func (r *EmployeeRepo) RetrieveEmployees() ([]models.EmployeeRetrieve, error) {
 		var employee models.EmployeeRetrieve
 		err := rows.Scan(
 			&employee.ID,
+			&employee.Login,
 			&employee.Surname,
 			&employee.Name,
 			&employee.Patronymic,
@@ -172,13 +233,31 @@ func (r *EmployeeRepo) RetrieveEmployees() ([]models.EmployeeRetrieve, error) {
 	return employees, nil
 }
 
-func (r *EmployeeRepo) DeleteEmployee(id string) error {
+func (r *employeeRepo) DeleteEmployee(id string) error {
+	log.Printf("[EmployeeRepo] Executing DELETE query for employee ID: %s", id)
 	query := `DELETE FROM employee WHERE employee_id = $1`
-	_, err := r.db.Exec(query, id)
-	return err
+	result, err := r.db.Exec(query, id)
+	if err != nil {
+		log.Printf("[EmployeeRepo] Database error: %v", err)
+		return err
+	}
+	
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("[EmployeeRepo] Error getting rows affected: %v", err)
+		return err
+	}
+	
+	if rowsAffected == 0 {
+		log.Printf("[EmployeeRepo] No employee found with ID: %s", id)
+		return fmt.Errorf("employee not found")
+	}
+	
+	log.Printf("[EmployeeRepo] Successfully deleted employee with ID: %s, rows affected: %d", id, rowsAffected)
+	return nil
 }
 
-func (r *EmployeeRepo) UpdateEmployee(id string, c models.EmployeeUpdate) error {
+func (r *employeeRepo) UpdateEmployee(id string, c models.EmployeeUpdate) error {
 	query := `
 		UPDATE employee
 		SET
@@ -211,4 +290,24 @@ func (r *EmployeeRepo) UpdateEmployee(id string, c models.EmployeeUpdate) error 
 		c.ZipCode,
 	)
 	return err
+}
+
+func (r *employeeRepo) GetByLogin(login string) (models.EmployeeAuth, error) {
+	query := `
+		SELECT
+			employee_id,
+			hashed_password
+		FROM employee
+		WHERE login = $1
+	`
+	var employee models.EmployeeAuth
+	err := r.db.QueryRow(query, login).Scan(
+		&employee.ID,
+		&employee.Password,
+	)
+	if err != nil {
+		return models.EmployeeAuth{}, err
+	}
+
+	return employee, nil
 }

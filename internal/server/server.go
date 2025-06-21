@@ -5,22 +5,29 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/velosypedno/zlagoda/internal/config"
 	"github.com/velosypedno/zlagoda/internal/ioc"
+	"github.com/velosypedno/zlagoda/internal/middleware"
 )
 
-func SetupRoutes(c *ioc.HandlerContainer) *gin.Engine {
+func SetupRoutes(c *ioc.HandlerContainer, cfg *config.Config) *gin.Engine {
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
 
+	router.POST("/api/login", c.LoginPOSTHandler)
+	router.POST("/api/register", c.RegisterPOSTHandler)
 	api := router.Group("/api")
+	api.Use(middleware.AuthMiddleware(cfg))
 	{
+		api.GET("/account", c.AccountGETHandler)
+
 		api.POST("/categories", c.CategoryCreatePOSTHandler)
 		api.GET("/categories", c.CategoriesListGETHandler)
 		api.GET("/categories/:id", c.CategoryRetrieveGETHandler)
@@ -34,6 +41,7 @@ func SetupRoutes(c *ioc.HandlerContainer) *gin.Engine {
 		api.PATCH("/customer-cards/:card_number", c.CustomerCardUpdatePATCHHandler)
 
 		api.POST("/employees", c.EmployeeCreatePOSTHandler)
+		api.POST("/employees/with-auth", c.EmployeeCreateWithAuthPOSTHandler)
 		api.GET("/employees", c.EmployeesListGETHandler)
 		api.GET("/employees/:id", c.EmployeeRetrieveGETHandler)
 		api.DELETE("/employees/:id", c.EmployeeDeleteDELETEHandler)

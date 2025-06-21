@@ -16,6 +16,10 @@ import (
 type HandlerContainer struct {
 	DB *sql.DB
 
+	LoginPOSTHandler    gin.HandlerFunc
+	RegisterPOSTHandler gin.HandlerFunc
+	AccountGETHandler   gin.HandlerFunc
+
 	CategoryCreatePOSTHandler   gin.HandlerFunc
 	CategoryRetrieveGETHandler  gin.HandlerFunc
 	CategoriesListGETHandler    gin.HandlerFunc
@@ -29,6 +33,7 @@ type HandlerContainer struct {
 	CustomerCardUpdatePATCHHandler  gin.HandlerFunc
 
 	EmployeeCreatePOSTHandler   gin.HandlerFunc
+	EmployeeCreateWithAuthPOSTHandler gin.HandlerFunc
 	EmployeeRetrieveGETHandler  gin.HandlerFunc
 	EmployeesListGETHandler     gin.HandlerFunc
 	EmployeeDeleteDELETEHandler gin.HandlerFunc
@@ -129,8 +134,16 @@ func BuildHandlerContainer(c *config.Config) (*HandlerContainer, error) {
 	receiptRepo := repos.NewReceiptRepo(db)
 	receiptService := services.NewReceiptService(receiptRepo, saleRepo, storeProductRepo)
 
+	loginService := services.NewLoginService(employeeRepo, c)
+	registerService := services.NewRegisterService(employeeRepo, c)
+	accountService := services.NewAccountService(employeeRepo)
+
 	return &HandlerContainer{
 		DB: db,
+
+		LoginPOSTHandler:    handlers.NewLoginPOSTHandler(loginService),
+		RegisterPOSTHandler: handlers.NewRegisterPOSTHandler(registerService),
+		AccountGETHandler:   handlers.NewAccountGETHandler(accountService),
 
 		CategoryCreatePOSTHandler:   handlers.NewCategoryCreatePOSTHandler(categoryService),
 		CategoryRetrieveGETHandler:  handlers.NewCategoryRetrieveGETHandler(categoryService),
@@ -145,6 +158,7 @@ func BuildHandlerContainer(c *config.Config) (*HandlerContainer, error) {
 		CustomerCardUpdatePATCHHandler:  handlers.NewCustomerCardUpdatePATCHHandler(customerCardService),
 
 		EmployeeCreatePOSTHandler:   handlers.NewEmployeeCreatePOSTHandler(employeeService),
+		EmployeeCreateWithAuthPOSTHandler: handlers.NewEmployeeCreateWithAuthPOSTHandler(employeeService),
 		EmployeeRetrieveGETHandler:  handlers.NewEmployeeRetrieveGETHandler(employeeService),
 		EmployeesListGETHandler:     handlers.NewEmployeesListGETHandler(employeeService),
 		EmployeeDeleteDELETEHandler: handlers.NewEmployeeDeleteDELETEHandler(employeeService),

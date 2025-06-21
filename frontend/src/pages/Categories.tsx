@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { fetchCategories, deleteCategory, updateCategory, createCategory } from "../api/categories";
 import { type Category } from "../types/category";
 import CategoryCard from "../components/CategoryCard";
+import { useAuth } from "../contexts/AuthContext";
 
 const CategoriesPage = () => {
+  const { isManager } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
@@ -79,22 +81,25 @@ const CategoriesPage = () => {
 
       {error && <div className="mb-4 text-red-500">{error}</div>}
 
-      <div className="flex mb-6 gap-2">
-        <input
-          type="text"
-          placeholder="New category name"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          className="flex-grow border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-        />
-        <button
-          onClick={handleCreate}
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
-          disabled={!newName.trim()}
-        >
-          Add
-        </button>
-      </div>
+      {/* Only show create form for managers */}
+      {isManager && (
+        <div className="flex mb-6 gap-2">
+          <input
+            type="text"
+            placeholder="New category name"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            className="flex-grow border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <button
+            onClick={handleCreate}
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
+            disabled={!newName.trim()}
+          >
+            Add
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {categories
