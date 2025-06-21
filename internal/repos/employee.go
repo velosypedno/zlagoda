@@ -3,6 +3,7 @@ package repos
 import (
 	"database/sql"
 	"fmt"
+	"log"
 
 	"github.com/velosypedno/zlagoda/internal/models"
 	"github.com/velosypedno/zlagoda/internal/utils"
@@ -234,9 +235,27 @@ func (r *employeeRepo) RetrieveEmployees() ([]models.EmployeeRetrieve, error) {
 }
 
 func (r *employeeRepo) DeleteEmployee(id string) error {
+	log.Printf("[EmployeeRepo] Executing DELETE query for employee ID: %s", id)
 	query := `DELETE FROM employee WHERE employee_id = $1`
-	_, err := r.db.Exec(query, id)
-	return err
+	result, err := r.db.Exec(query, id)
+	if err != nil {
+		log.Printf("[EmployeeRepo] Database error: %v", err)
+		return err
+	}
+	
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("[EmployeeRepo] Error getting rows affected: %v", err)
+		return err
+	}
+	
+	if rowsAffected == 0 {
+		log.Printf("[EmployeeRepo] No employee found with ID: %s", id)
+		return fmt.Errorf("employee not found")
+	}
+	
+	log.Printf("[EmployeeRepo] Successfully deleted employee with ID: %s, rows affected: %d", id, rowsAffected)
+	return nil
 }
 
 func (r *employeeRepo) UpdateEmployee(id string, c models.EmployeeUpdate) error {

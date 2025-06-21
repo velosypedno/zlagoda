@@ -41,6 +41,7 @@ func SetupRoutes(c *ioc.HandlerContainer, cfg *config.Config) *gin.Engine {
 		api.PATCH("/customer-cards/:card_number", c.CustomerCardUpdatePATCHHandler)
 
 		api.POST("/employees", c.EmployeeCreatePOSTHandler)
+		api.POST("/employees/with-auth", c.EmployeeCreateWithAuthPOSTHandler)
 		api.GET("/employees", c.EmployeesListGETHandler)
 		api.GET("/employees/:id", c.EmployeeRetrieveGETHandler)
 		api.DELETE("/employees/:id", c.EmployeeDeleteDELETEHandler)

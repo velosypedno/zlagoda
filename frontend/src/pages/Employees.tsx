@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { fetchEmployees, deleteEmployee, updateEmployee, createEmployee } from "../api/employees";
+import { fetchEmployees, deleteEmployee, updateEmployee, createEmployeeWithAuth } from "../api/employees";
 import type { Employee } from "../types/employee";
 import EmployeeCard from "../components/EmployeeCard";
 
 const EmployeesPage = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [newEmployee, setNewEmployee] = useState<Omit<Employee, 'employee_id'>>({
+  const [newEmployee, setNewEmployee] = useState<Omit<Employee, 'employee_id'> & { login: string; password: string }>({
     empl_surname: "",
     empl_name: "",
     empl_patronymic: "",
@@ -18,11 +18,13 @@ const EmployeesPage = () => {
     city: "",
     street: "",
     zip_code: "",
+    login: "",
+    password: "",
   });
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<'empl_surname' | 'empl_name'>("empl_surname");
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>("asc");
-  const [roleFilter, setRoleFilter] = useState<'all' | 'manager' | 'cashier'>("all");
+  const [roleFilter, setRoleFilter] = useState<'all' | 'Manager' | 'Cashier'>("all");
 
   const loadEmployees = async () => {
     try {
@@ -61,13 +63,12 @@ const EmployeesPage = () => {
 
   const handleCreate = async () => {
     // Basic validation
-    if (!newEmployee.empl_surname || !newEmployee.empl_name || !newEmployee.empl_role || !newEmployee.salary || !newEmployee.date_of_birth || !newEmployee.date_of_start || !newEmployee.phone_number || !newEmployee.city || !newEmployee.street || !newEmployee.zip_code) {
+    if (!newEmployee.empl_surname || !newEmployee.empl_name || !newEmployee.empl_role || !newEmployee.salary || !newEmployee.date_of_birth || !newEmployee.date_of_start || !newEmployee.phone_number || !newEmployee.city || !newEmployee.street || !newEmployee.zip_code || !newEmployee.login || !newEmployee.password) {
       setError("Please fill all required fields");
       return;
     }
     try {
-      const res = await createEmployee(newEmployee);
-      setEmployees((prev) => [...prev, res.data]);
+      await createEmployeeWithAuth(newEmployee);
       setNewEmployee({
         empl_surname: "",
         empl_name: "",
@@ -80,6 +81,8 @@ const EmployeesPage = () => {
         city: "",
         street: "",
         zip_code: "",
+        login: "",
+        password: "",
       });
       setError(null);
       await loadEmployees();
@@ -107,10 +110,10 @@ const EmployeesPage = () => {
           onChange={e => setSearch(e.target.value)}
           className="border rounded px-3 py-2 w-full max-w-xs"
         />
-        <select value={roleFilter} onChange={e => setRoleFilter(e.target.value as 'all' | 'manager' | 'cashier')} className="border rounded px-2 py-2">
+        <select value={roleFilter} onChange={e => setRoleFilter(e.target.value as 'all' | 'Manager' | 'Cashier')} className="border rounded px-2 py-2">
           <option value="all">All Roles</option>
-          <option value="manager">Manager</option>
-          <option value="cashier">Cashier</option>
+          <option value="Manager">Manager</option>
+          <option value="Cashier">Cashier</option>
         </select>
         <select value={sortField} onChange={e => setSortField(e.target.value as 'empl_surname' | 'empl_name')} className="border rounded px-2 py-2">
           <option value="empl_surname">Sort by Surname</option>
@@ -128,8 +131,8 @@ const EmployeesPage = () => {
         <input name="empl_patronymic" value={newEmployee.empl_patronymic} onChange={handleNewChange} placeholder="Patronymic" className="border rounded px-3 py-2" />
         <select name="empl_role" value={newEmployee.empl_role} onChange={handleNewChange} className="border rounded px-3 py-2">
           <option value="">Role</option>
-          <option value="manager">Manager</option>
-          <option value="cashier">Cashier</option>
+          <option value="Manager">Manager</option>
+          <option value="Cashier">Cashier</option>
         </select>
         <input name="salary" type="number" value={newEmployee.salary} onChange={handleNewChange} placeholder="Salary" className="border rounded px-3 py-2" />
         <input name="date_of_birth" type="date" value={newEmployee.date_of_birth} onChange={handleNewChange} placeholder="Date of Birth" className="border rounded px-3 py-2" />
@@ -138,6 +141,8 @@ const EmployeesPage = () => {
         <input name="city" value={newEmployee.city} onChange={handleNewChange} placeholder="City" className="border rounded px-3 py-2" />
         <input name="street" value={newEmployee.street} onChange={handleNewChange} placeholder="Street" className="border rounded px-3 py-2" />
         <input name="zip_code" value={newEmployee.zip_code} onChange={handleNewChange} placeholder="Zip Code" className="border rounded px-3 py-2" />
+        <input name="login" value={newEmployee.login} onChange={handleNewChange} placeholder="Login" className="border rounded px-3 py-2" />
+        <input name="password" type="password" value={newEmployee.password} onChange={handleNewChange} placeholder="Password" className="border rounded px-3 py-2" />
       </div>
       <button onClick={handleCreate} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 mb-8">Add Employee</button>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -148,13 +153,13 @@ const EmployeesPage = () => {
             return (
               roleOk &&
               (!q ||
-                employee.empl_surname.toLowerCase().includes(q) ||
-                employee.empl_name.toLowerCase().includes(q))
+                (employee.empl_surname || '').toLowerCase().includes(q) ||
+                (employee.empl_name || '').toLowerCase().includes(q))
             );
           })
           .sort((a, b) => {
-            const fieldA = a[sortField].toLowerCase();
-            const fieldB = b[sortField].toLowerCase();
+            const fieldA = (a[sortField] || '').toString().toLowerCase();
+            const fieldB = (b[sortField] || '').toString().toLowerCase();
             if (fieldA < fieldB) return sortOrder === 'asc' ? -1 : 1;
             if (fieldA > fieldB) return sortOrder === 'asc' ? 1 : -1;
             return 0;

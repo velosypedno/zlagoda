@@ -33,6 +33,7 @@ type HandlerContainer struct {
 	CustomerCardUpdatePATCHHandler  gin.HandlerFunc
 
 	EmployeeCreatePOSTHandler   gin.HandlerFunc
+	EmployeeCreateWithAuthPOSTHandler gin.HandlerFunc
 	EmployeeRetrieveGETHandler  gin.HandlerFunc
 	EmployeesListGETHandler     gin.HandlerFunc
 	EmployeeDeleteDELETEHandler gin.HandlerFunc
@@ -159,6 +160,7 @@ func BuildHandlerContainer(c *config.Config) (*HandlerContainer, error) {
 		CustomerCardUpdatePATCHHandler:  handlers.NewCustomerCardUpdatePATCHHandler(customerCardService),
 
 		EmployeeCreatePOSTHandler:   handlers.NewEmployeeCreatePOSTHandler(employeeService),
+		EmployeeCreateWithAuthPOSTHandler: handlers.NewEmployeeCreateWithAuthPOSTHandler(employeeService),
 		EmployeeRetrieveGETHandler:  handlers.NewEmployeeRetrieveGETHandler(employeeService),
 		EmployeesListGETHandler:     handlers.NewEmployeesListGETHandler(employeeService),
 		EmployeeDeleteDELETEHandler: handlers.NewEmployeeDeleteDELETEHandler(employeeService),

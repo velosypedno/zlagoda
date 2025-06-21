@@ -198,8 +198,6 @@ const Register = () => {
                 <option value="">Select a role</option>
                 <option value="Manager">Manager</option>
                 <option value="Cashier">Cashier</option>
-                <option value="Stock Clerk">Stock Clerk</option>
-                <option value="Security">Security</option>
               </select>
             </div>
 
