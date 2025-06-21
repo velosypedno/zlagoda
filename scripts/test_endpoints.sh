@@ -1,604 +1,706 @@
 #!/bin/bash
 
-# 🌸✨ Zlagoda API Kawaii Testing Script ✨🌸
-# =============================================================================
-# This super kawaii script tests all API endpoints with love and care! (◕‿◕)♡
-# It creates test data, performs cute operations, and cleans up like a good
-# kawaii assistant while respecting database relationships! ヽ(´▽｀)/
-#
-# Usage: ./test_endpoints.sh
-# Requirements: curl, bash, and lots of kawaii energy! ✨
-# =============================================================================
+# 🌸 Zlagoda API Endpoint Testing Script with Kawaii Validation 🌸
+# Proper unit testing with response validation and cute emojis!
 
-# Kawaii colors for output! 🌈
+# Configuration
+BASE_URL="http://localhost:8080/api"
+CONTENT_TYPE="Content-Type: application/json"
+
+# Kawaii colors and emojis
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 PINK='\033[0;35m'
 CYAN='\033[0;36m'
-PURPLE='\033[0;95m'
 NC='\033[0m' # No Color
-
-# Base URL
-BASE_URL="http://localhost:8080/api"
 
 # Test counters
 TOTAL_TESTS=0
 PASSED_TESTS=0
 FAILED_TESTS=0
 
-# Test results storage
-declare -a FAILED_TEST_DETAILS=()
+# Helper functions
+print_header() {
+    echo -e "\n${CYAN}🌟 === $1 === 🌟${NC}"
+}
 
-# Function to print kawaii colored output
-print_status() {
-    local status=$1
-    local message=$2
-    if [ "$status" = "PASS" ]; then
-        echo -e "${GREEN}✨ PASS: $message (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧${NC}"
+print_test() {
+    echo -e "${BLUE}🧪 Testing: $1${NC}"
+}
+
+assert_success() {
+    local test_name="$1"
+    local response="$2"
+    local expected_status="$3"
+    local actual_status="$4"
+
+    ((TOTAL_TESTS++))
+    if [ "$actual_status" -eq "$expected_status" ]; then
+        echo -e "${GREEN}✨ PASS: $test_name (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧${NC}"
         ((PASSED_TESTS++))
-        ((TOTAL_TESTS++))
-    elif [ "$status" = "FAIL" ]; then
-        echo -e "${RED}💥 FAIL: $message (╥﹏╥)${NC}"
+        return 0
+    else
+        echo -e "${RED}💥 FAIL: $test_name (╥﹏╥) Expected: $expected_status, Got: $actual_status${NC}"
+        echo -e "${YELLOW}📝 Response: $response${NC}"
         ((FAILED_TESTS++))
+        return 1
+    fi
+}
+
+assert_contains() {
+    local test_name="$1"
+    local response="$2"
+    local expected_field="$3"
+
+    ((TOTAL_TESTS++))
+    if echo "$response" | grep -q "$expected_field"; then
+        echo -e "${GREEN}🎀 PASS: $test_name contains '$expected_field' (◕‿◕)♡${NC}"
+        ((PASSED_TESTS++))
+        return 0
+    else
+        echo -e "${RED}🌧️  FAIL: $test_name missing '$expected_field' (´；ω；')${NC}"
+        echo -e "${YELLOW}📝 Response: $response${NC}"
+        ((FAILED_TESTS++))
+        return 1
+    fi
+}
+
+assert_not_contains() {
+    local test_name="$1"
+    local response="$2"
+    local unexpected_field="$3"
+
+    ((TOTAL_TESTS++))
+    if ! echo "$response" | grep -q "$unexpected_field"; then
+        echo -e "${GREEN}🎈 PASS: $test_name doesn't contain '$unexpected_field' (＾◡＾)${NC}"
+        ((PASSED_TESTS++))
+        return 0
+    else
+        echo -e "${RED}💔 FAIL: $test_name unexpectedly contains '$unexpected_field' (╯︵╰)${NC}"
+        echo -e "${YELLOW}📝 Response: $response${NC}"
+        ((FAILED_TESTS++))
+        return 1
+    fi
+}
+
+validate_json() {
+    local test_name="$1"
+    local response="$2"
+
+    ((TOTAL_TESTS++))
+    if echo "$response" | python3 -m json.tool >/dev/null 2>&1; then
+        echo -e "${GREEN}🍰 PASS: $test_name is valid JSON (´∀｀)♡${NC}"
+        ((PASSED_TESTS++))
+        return 0
+    else
+        echo -e "${RED}🔥 FAIL: $test_name is not valid JSON (ಥ_ಥ)${NC}"
+        echo -e "${YELLOW}📝 Response: $response${NC}"
+        ((FAILED_TESTS++))
+        return 1
+    fi
+}
+
+make_request() {
+    local method="$1"
+    local endpoint="$2"
+    local data="$3"
+
+    if [ "$method" = "GET" ] || [ "$method" = "DELETE" ]; then
+        curl -s -w "\n%{http_code}" -X "$method" "$BASE_URL/$endpoint"
+    else
+        curl -s -w "\n%{http_code}" -X "$method" "$BASE_URL/$endpoint" -H "$CONTENT_TYPE" -d "$data"
+    fi
+}
+
+parse_response() {
+    local full_response="$1"
+    echo "$full_response" | head -n -1
+}
+
+parse_status() {
+    local full_response="$1"
+    echo "$full_response" | tail -n 1
+}
+
+# Test API health
+test_api_health() {
+    print_header "API Health Check"
+
+    print_test "API server availability"
+    local full_response=$(curl -s -w "\n%{http_code}" "$BASE_URL/../")
+    local status=$(parse_status "$full_response")
+
+    if [ "$status" -eq 200 ] || [ "$status" -eq 404 ]; then
+        echo -e "${GREEN}🌈 API server is running! ヽ(´▽｀)/${NC}"
+        return 0
+    else
+        echo -e "${RED}💀 API server is down! (ノಠ益ಠ)ノ${NC}"
+        return 1
+    fi
+}
+
+# Category endpoints testing
+test_categories() {
+    print_header "Category Endpoints"
+
+    # Test 1: Create category
+    print_test "Create category"
+    local full_response=$(make_request "POST" "categories" '{"name":"Kawaii Test Category"}')
+    local response=$(parse_response "$full_response")
+    local status=$(parse_status "$full_response")
+
+    assert_success "Category creation" "$response" 201 "$status"
+    validate_json "Category creation response" "$response"
+    assert_contains "Category creation ID" "$response" '"id":'
+
+    # Extract category ID for further tests
+    local category_id=$(echo "$response" | grep -o '"id":[0-9]*' | cut -d':' -f2)
+
+    # Test 2: List categories
+    print_test "List categories"
+    full_response=$(make_request "GET" "categories")
+    response=$(parse_response "$full_response")
+    status=$(parse_status "$full_response")
+
+    assert_success "Category listing" "$response" 200 "$status"
+    validate_json "Category listing response" "$response"
+    assert_contains "Category in list" "$response" '"name":"Kawaii Test Category"'
+
+    # Test 3: Get single category
+    if [ -n "$category_id" ]; then
+        print_test "Get category by ID"
+        full_response=$(make_request "GET" "categories/$category_id")
+        response=$(parse_response "$full_response")
+        status=$(parse_status "$full_response")
+
+        assert_success "Category retrieval" "$response" 200 "$status"
+        validate_json "Category retrieval response" "$response"
+        assert_contains "Category ID match" "$response" "\"id\":$category_id"
+    fi
+
+    # Test 4: Update category
+    if [ -n "$category_id" ]; then
+        print_test "Update category"
+        full_response=$(make_request "PATCH" "categories/$category_id" '{"name":"Updated Kawaii Category"}')
+        response=$(parse_response "$full_response")
+        status=$(parse_status "$full_response")
+
+        assert_success "Category update" "$response" 200 "$status"
+        assert_contains "Update success message" "$response" '"message"'
+    fi
+}
+
+# Product endpoints testing
+test_products() {
+    print_header "Product Endpoints"
+
+    # Test 1: Create product
+    print_test "Create product"
+    local full_response=$(make_request "POST" "products" '{
+        "category_id": 1,
+        "name": "Kawaii Test Product",
+        "characteristics": "Super kawaii product with magical properties ✨"
+    }')
+    local response=$(parse_response "$full_response")
+    local status=$(parse_status "$full_response")
+
+    assert_success "Product creation" "$response" 201 "$status"
+    validate_json "Product creation response" "$response"
+    assert_contains "Product creation ID" "$response" '"id":'
+
+    # Extract product ID
+    local product_id=$(echo "$response" | grep -o '"id":[0-9]*' | cut -d':' -f2)
+
+    # Test 2: List products
+    print_test "List products"
+    full_response=$(make_request "GET" "products")
+    response=$(parse_response "$full_response")
+    status=$(parse_status "$full_response")
+
+    assert_success "Product listing" "$response" 200 "$status"
+    validate_json "Product listing response" "$response"
+    assert_contains "Product in list" "$response" '"name":"Kawaii Test Product"'
+
+    # Test 3: Search products
+    print_test "Search products by name"
+    full_response=$(make_request "GET" "products/search?name=Kawaii")
+    response=$(parse_response "$full_response")
+    status=$(parse_status "$full_response")
+
+    assert_success "Product search" "$response" 200 "$status"
+    validate_json "Product search response" "$response"
+
+    # Test 4: Get products by category
+    print_test "Get products by category"
+    full_response=$(make_request "GET" "products/by-category/1")
+    response=$(parse_response "$full_response")
+    status=$(parse_status "$full_response")
+
+    assert_success "Products by category" "$response" 200 "$status"
+    validate_json "Products by category response" "$response"
+}
+
+# Store Product endpoints testing
+test_store_products() {
+    print_header "Store Product Endpoints"
+
+    # Test 1: Create store product
+    print_test "Create store product"
+    local full_response=$(make_request "POST" "store-products" '{
+        "product_id": 1,
+        "selling_price": 29.99,
+        "products_number": 50,
+        "promotional_product": false
+    }')
+    local response=$(parse_response "$full_response")
+    local status=$(parse_status "$full_response")
+
+    assert_success "Store product creation" "$response" 201 "$status"
+    validate_json "Store product creation response" "$response"
+    assert_contains "Store product UPC" "$response" '"upc":'
+
+    # Extract UPC for further tests
+    local upc=$(echo "$response" | grep -o '"upc":"[^"]*"' | cut -d'"' -f4)
+
+    # Test 2: List store products
+    print_test "List store products"
+    full_response=$(make_request "GET" "store-products")
+    response=$(parse_response "$full_response")
+    status=$(parse_status "$full_response")
+
+    assert_success "Store product listing" "$response" 200 "$status"
+    validate_json "Store product listing response" "$response"
+
+    # Test 3: List store products with details
+    print_test "List store products with details"
+    full_response=$(make_request "GET" "store-products/details")
+    response=$(parse_response "$full_response")
+    status=$(parse_status "$full_response")
+
+    assert_success "Store products with details" "$response" 200 "$status"
+    validate_json "Store products with details response" "$response"
+    assert_contains "Product details" "$response" '"product_name"'
+    assert_contains "Category details" "$response" '"category_name"'
+
+    # Test 4: Get promotional products
+    print_test "Get promotional products"
+    full_response=$(make_request "GET" "store-products/promotional")
+    response=$(parse_response "$full_response")
+    status=$(parse_status "$full_response")
+
+    assert_success "Promotional products" "$response" 200 "$status"
+    validate_json "Promotional products response" "$response"
+}
+
+# Employee endpoints testing
+test_employees() {
+    print_header "Employee Endpoints"
+
+    # Test 1: Create employee
+    print_test "Create employee"
+    local full_response=$(make_request "POST" "employees" '{
+        "empl_surname": "Kawaii",
+        "empl_name": "Sakura",
+        "empl_patronymic": "Cherry",
+        "empl_role": "cashier",
+        "salary": 30000.00,
+        "date_of_birth": "1995-03-15",
+        "date_of_start": "2023-01-01",
+        "phone_number": "+380123456789",
+        "city": "Kawaii City",
+        "street": "Sakura Street",
+        "zip_code": "12345"
+    }')
+    local response=$(parse_response "$full_response")
+    local status=$(parse_status "$full_response")
+
+    assert_success "Employee creation" "$response" 201 "$status"
+    validate_json "Employee creation response" "$response"
+    assert_contains "Employee creation ID" "$response" '"id":'
+
+    # Extract employee ID
+    local employee_id=$(echo "$response" | grep -o '"id":"[^"]*"' | cut -d'"' -f4)
+
+    # Test 2: List employees
+    print_test "List employees"
+    full_response=$(make_request "GET" "employees")
+    response=$(parse_response "$full_response")
+    status=$(parse_status "$full_response")
+
+    assert_success "Employee listing" "$response" 200 "$status"
+    validate_json "Employee listing response" "$response"
+    assert_contains "Employee in list" "$response" '"empl_surname":"Kawaii"'
+
+    # Test 3: Get employee by ID
+    if [ -n "$employee_id" ]; then
+        print_test "Get employee by ID"
+        full_response=$(make_request "GET" "employees/$employee_id")
+        response=$(parse_response "$full_response")
+        status=$(parse_status "$full_response")
+
+        assert_success "Employee retrieval" "$response" 200 "$status"
+        validate_json "Employee retrieval response" "$response"
+        assert_contains "Employee ID match" "$response" "\"employee_id\":\"$employee_id\""
+    fi
+}
+
+# Customer Card endpoints testing
+test_customer_cards() {
+    print_header "Customer Card Endpoints"
+
+    # Test 1: Create customer card
+    print_test "Create customer card"
+    local full_response=$(make_request "POST" "customer-cards" '{
+        "cust_surname": "Anime",
+        "cust_name": "Waifu",
+        "cust_patronymic": "Chan",
+        "phone_number": "+380987654321",
+        "city": "Anime City",
+        "street": "Waifu Avenue",
+        "zip_code": "54321",
+        "percent": 10
+    }')
+    local response=$(parse_response "$full_response")
+    local status=$(parse_status "$full_response")
+
+    assert_success "Customer card creation" "$response" 201 "$status"
+    validate_json "Customer card creation response" "$response"
+    assert_contains "Customer card ID" "$response" '"id":'
+
+    # Extract card ID
+    local card_id=$(echo "$response" | grep -o '"id":"[^"]*"' | cut -d'"' -f4)
+
+    # Test 2: List customer cards
+    print_test "List customer cards"
+    full_response=$(make_request "GET" "customer-cards")
+    response=$(parse_response "$full_response")
+    status=$(parse_status "$full_response")
+
+    assert_success "Customer card listing" "$response" 200 "$status"
+    validate_json "Customer card listing response" "$response"
+    assert_contains "Customer card in list" "$response" '"cust_surname":"Anime"'
+
+    # Test 3: Get customer card by number
+    if [ -n "$card_id" ]; then
+        print_test "Get customer card by number"
+        full_response=$(make_request "GET" "customer-cards/$card_id")
+        response=$(parse_response "$full_response")
+        status=$(parse_status "$full_response")
+
+        assert_success "Customer card retrieval" "$response" 200 "$status"
+        validate_json "Customer card retrieval response" "$response"
+        assert_contains "Card number match" "$response" "\"card_number\":\"$card_id\""
+    fi
+}
+
+# Receipt endpoints testing
+test_receipts() {
+    print_header "Receipt Endpoints"
+
+    # Get existing employee for receipt creation
+    local employees_response=$(make_request "GET" "employees")
+    local employees=$(parse_response "$employees_response")
+    local employee_id=$(echo "$employees" | grep -o '"employee_id":"[^"]*"' | head -1 | cut -d'"' -f4)
+
+    if [ -n "$employee_id" ]; then
+        # Test 1: Create receipt
+        print_test "Create receipt"
+        local full_response=$(make_request "POST" "receipts" "{
+            \"employee_id\": \"$employee_id\",
+            \"print_date\": \"2024-01-15\",
+            \"sum_total\": 99.99
+        }")
+        local response=$(parse_response "$full_response")
+        local status=$(parse_status "$full_response")
+
+        assert_success "Receipt creation" "$response" 201 "$status"
+        validate_json "Receipt creation response" "$response"
+        assert_contains "Receipt creation ID" "$response" '"id":'
+    fi
+
+    # Test 2: List receipts
+    print_test "List receipts"
+    full_response=$(make_request "GET" "receipts")
+    response=$(parse_response "$full_response")
+    status=$(parse_status "$full_response")
+
+    assert_success "Receipt listing" "$response" 200 "$status"
+    validate_json "Receipt listing response" "$response"
+}
+
+# Sales endpoints testing
+test_sales() {
+    print_header "Sales Endpoints"
+
+    # Test 1: List sales
+    print_test "List sales"
+    local full_response=$(make_request "GET" "sales")
+    local response=$(parse_response "$full_response")
+    local status=$(parse_status "$full_response")
+
+    assert_success "Sales listing" "$response" 200 "$status"
+    validate_json "Sales listing response" "$response"
+
+    # Test 2: List sales with details
+    print_test "List sales with details"
+    full_response=$(make_request "GET" "sales/details")
+    response=$(parse_response "$full_response")
+    status=$(parse_status "$full_response")
+
+    assert_success "Sales with details" "$response" 200 "$status"
+    validate_json "Sales with details response" "$response"
+
+    # Test 3: Get top selling products
+    print_test "Get top selling products"
+    full_response=$(make_request "GET" "sales/top-products")
+    response=$(parse_response "$full_response")
+    status=$(parse_status "$full_response")
+
+    assert_success "Top selling products" "$response" 200 "$status"
+    validate_json "Top selling products response" "$response"
+}
+
+# Check endpoints testing
+test_checks() {
+    print_header "Check Endpoints"
+
+    # Get existing data for check creation
+    local employees_response=$(make_request "GET" "employees")
+    local employees=$(parse_response "$employees_response")
+    local employee_id=$(echo "$employees" | grep -o '"employee_id":"[^"]*"' | head -1 | cut -d'"' -f4)
+
+    local cards_response=$(make_request "GET" "customer-cards")
+    local cards=$(parse_response "$cards_response")
+    local card_number=$(echo "$cards" | grep -o '"card_number":"[^"]*"' | head -1 | cut -d'"' -f4)
+
+    local store_products_response=$(make_request "GET" "store-products")
+    local store_products=$(parse_response "$store_products_response")
+    local upc=$(echo "$store_products" | grep -o '"upc":"[^"]*"' | head -1 | cut -d'"' -f4)
+
+    if [ -n "$employee_id" ] && [ -n "$upc" ]; then
+        # Test 1: Create check
+        print_test "Create check (complex transaction)"
+        local check_data="{
+            \"employee_id\": \"$employee_id\",
+            \"card_number\": \"$card_number\",
+            \"print_date\": \"2024-01-15\",
+            \"items\": [
+                {
+                    \"upc\": \"$upc\",
+                    \"product_number\": 3,
+                    \"selling_price\": 29.99
+                }
+            ]
+        }"
+
+        local full_response=$(make_request "POST" "checks" "$check_data")
+        local response=$(parse_response "$full_response")
+        local status=$(parse_status "$full_response")
+
+        assert_success "Check creation" "$response" 201 "$status"
+        validate_json "Check creation response" "$response"
+        assert_contains "Receipt number" "$response" '"receipt_number":'
+        assert_contains "Total sum" "$response" '"total_sum":'
+        assert_contains "VAT" "$response" '"vat":'
+        assert_contains "Print date" "$response" '"print_date":'
+
+        # Validate calculation logic
+        local total_sum=$(echo "$response" | grep -o '"total_sum":[0-9.]*' | cut -d':' -f2)
         ((TOTAL_TESTS++))
-        FAILED_TEST_DETAILS+=("$message")
-    elif [ "$status" = "INFO" ]; then
-        echo -e "${CYAN}🌟 $message ♪(´▽｀)♪${NC}"
-    fi
-}
-
-# Function to test HTTP endpoint
-test_endpoint() {
-    local method=$1
-    local endpoint=$2
-    local data=$3
-    local expected_status=$4
-    local test_name=$5
-
-    # Prepare headers
-    local headers=("-H" "Content-Type: application/json")
-    if [ -n "$JWT_TOKEN" ]; then
-        headers+=("-H" "Authorization: Bearer $JWT_TOKEN")
-    fi
-
-    if [ -n "$data" ]; then
-        response=$(curl -s -w "HTTPSTATUS:%{http_code}" -X "$method" \
-            "${headers[@]}" \
-            -d "$data" \
-            "$BASE_URL$endpoint")
-    else
-        response=$(curl -s -w "HTTPSTATUS:%{http_code}" -X "$method" \
-            "${headers[@]}" \
-            "$BASE_URL$endpoint")
-    fi
-
-    http_code=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-    body=$(echo "$response" | sed -e 's/HTTPSTATUS:.*//')
-
-    if [ "$http_code" -eq "$expected_status" ]; then
-        print_status "PASS" "$test_name (HTTP $http_code)"
-        echo "$body" # Return response body for further processing
-    else
-        print_status "FAIL" "$test_name (Expected HTTP $expected_status, got HTTP $http_code)"
-        echo "Response: $body" >&2
-    fi
-}
-
-# Function to extract ID from JSON response
-extract_id() {
-    echo "$1" | grep -o '"id":[0-9]*' | grep -o '[0-9]*' | head -1
-}
-
-# Function to extract field from JSON response
-extract_field() {
-    local json=$1
-    local field=$2
-    echo "$json" | grep -o "\"$field\":\"[^\"]*\"" | sed "s/\"$field\":\"\(.*\)\"/\1/"
-}
-
-# Function to login and get JWT token
-login_and_get_token() {
-    print_status "INFO" "Logging in to get authentication token! (◕‿◕)♡"
-
-    # First register a test user
-    register_response=$(curl -s -w "HTTPSTATUS:%{http_code}" -X "POST" \
-        -H "Content-Type: application/json" \
-        -d '{
-            "login": "kawaii_test_user",
-            "password": "kawaii123",
-            "surname": "Test",
-            "name": "Kawaii",
-            "patronymic": "Chan",
-            "role": "Manager",
-            "salary": 50000.00,
-            "date_of_birth": "1990-01-01",
-            "date_of_start": "2020-01-01",
-            "phone_number": "+380999999999",
-            "city": "Test City",
-            "street": "Test Street 1",
-            "zip_code": "12345"
-        }' \
-        "http://localhost:8080/api/register")
-
-    register_http_code=$(echo "$register_response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-    register_body=$(echo "$register_response" | sed -e 's/HTTPSTATUS:.*//')
-
-    if [ "$register_http_code" -eq 201 ]; then
-        JWT_TOKEN=$(echo "$register_body" | grep -o '"token":"[^"]*"' | sed 's/"token":"\(.*\)"/\1/')
-        print_status "PASS" "User registered and token obtained! ✨"
-    else
-        # If registration fails, try login with existing user
-        print_status "INFO" "Registration failed, trying login with existing user..."
-
-        login_response=$(curl -s -w "HTTPSTATUS:%{http_code}" -X "POST" \
-            -H "Content-Type: application/json" \
-            -d '{
-                "login": "kawaii_test_user",
-                "password": "kawaii123"
-            }' \
-            "http://localhost:8080/api/login")
-
-        login_http_code=$(echo "$login_response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-        login_body=$(echo "$login_response" | sed -e 's/HTTPSTATUS:.*//')
-
-        if [ "$login_http_code" -eq 200 ]; then
-            JWT_TOKEN=$(echo "$login_body" | grep -o '"token":"[^"]*"' | sed 's/"token":"\(.*\)"/\1/')
-            print_status "PASS" "Login successful and token obtained! ✨"
+        if [ "$total_sum" = "89.97" ]; then
+            echo -e "${GREEN}🧮 PASS: Total calculation correct (29.99 * 3 = 89.97) (◕‿◕)♡${NC}"
+            ((PASSED_TESTS++))
         else
-            print_status "FAIL" "Failed to login and get token! Tests will fail (╥﹏╥)"
-            echo "Register response: $register_body" >&2
-            echo "Login response: $login_body" >&2
+            echo -e "${RED}💸 FAIL: Total calculation wrong. Expected: 89.97, Got: $total_sum (╥﹏╥)${NC}"
+            ((FAILED_TESTS++))
         fi
+    else
+        echo -e "${YELLOW}⚠️  Skipping check creation - missing required data (employee_id: $employee_id, upc: $upc) (´･ω･')${NC}"
     fi
 }
-# Store test IDs for cleanup
-CATEGORY_ID=""
-EMPLOYEE_ID=""
-CUSTOMER_CARD_NUMBER=""
-PRODUCT_ID=""
-STORE_PRODUCT_UPC=""
-RECEIPT_NUMBER=""
-RECEIPT_NUMBER_2=""
 
-# Authentication token
-JWT_TOKEN=""
+# Test error handling
+test_error_handling() {
+    print_header "Error Handling"
 
-# Start kawaii banner
-echo -e "${PINK}🌸✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨🌸${NC}"
-echo -e "${PINK}✨                                                      ✨${NC}"
-echo -e "${PINK}✨           🌸 KAWAII API TESTING BEGINS! 🌸           ✨${NC}"
-echo -e "${PINK}✨                    (◕‿◕)♡                           ✨${NC}"
-echo -e "${PINK}✨                                                      ✨${NC}"
-echo -e "${PINK}🌸✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨🌸${NC}"
-echo
+    # Test 1: Invalid category creation
+    print_test "Invalid category creation (empty name)"
+    local full_response=$(make_request "POST" "categories" '{"name":""}')
+    local response=$(parse_response "$full_response")
+    local status=$(parse_status "$full_response")
 
-# Login first to get authentication token
-login_and_get_token
-echo
+    assert_success "Invalid category rejection" "$response" 400 "$status"
+    assert_contains "Error message present" "$response" '"error"'
 
-echo -e "${CYAN}🏷️ === KAWAII CATEGORY ENDPOINTS === 🏷️${NC}"
+    # Test 2: Non-existent resource
+    print_test "Get non-existent category"
+    full_response=$(make_request "GET" "categories/99999")
+    response=$(parse_response "$full_response")
+    status=$(parse_status "$full_response")
 
-# Test Category Creation
-print_status "INFO" "Testing Category endpoints with magical powers! ✨"
-category_response=$(test_endpoint "POST" "/categories" '{"name":"🌸 Kawaii Test Category 🌸"}' 201 "Create Magical Category")
-CATEGORY_ID=$(extract_id "$category_response")
+    assert_success "Non-existent category" "$response" 404 "$status"
+    assert_contains "Not found error" "$response" '"error"'
 
-# Test Get Categories List
-test_endpoint "GET" "/categories" "" 200 "List All Cute Categories"
+    # Test 3: Invalid employee phone number
+    print_test "Invalid employee phone number"
+    full_response=$(make_request "POST" "employees" '{
+        "empl_surname": "Test",
+        "empl_name": "User",
+        "empl_role": "cashier",
+        "salary": 25000,
+        "date_of_birth": "1990-01-01",
+        "date_of_start": "2023-01-01",
+        "phone_number": "invalid",
+        "city": "Test City",
+        "street": "Test Street",
+        "zip_code": "12345"
+    }')
+    response=$(parse_response "$full_response")
+    status=$(parse_status "$full_response")
 
-# Test Get Category by ID
-if [ -n "$CATEGORY_ID" ]; then
-    test_endpoint "GET" "/categories/$CATEGORY_ID" "" 200 "Get Category by Kawaii ID"
+    assert_success "Invalid phone rejection" "$response" 400 "$status"
+    assert_contains "Phone validation error" "$response" '"error"'
+}
 
-    # Test Update Category
-    test_endpoint "PATCH" "/categories/$CATEGORY_ID" '{"name":"🌸 Updated Kawaii Category 🌸"}' 200 "Update Category with Love"
-fi
+# Cleanup function
+cleanup_test_data() {
+    print_header "Cleanup"
+    echo -e "${PINK}🧹 Test cleanup is disabled to preserve data (◕‿◕)${NC}"
+    echo -e "${YELLOW}💭 You can manually delete test data if needed (´∀')${NC}"
+}
 
-echo
+# Main execution with kawaii summary
+main() {
+    echo -e "${PINK}🌸✨ Starting Kawaii API Testing ✨🌸${NC}"
+    echo -e "${CYAN}🏠 Base URL: $BASE_URL${NC}"
+    echo -e "${BLUE}⏰ Timestamp: $(date)${NC}"
 
-echo -e "${PINK}💳 === KAWAII CUSTOMER CARD ENDPOINTS === 💳${NC}"
-
-# Test Customer Card Creation
-print_status "INFO" "Testing Customer Card endpoints with care! (｡◕‿◕｡)"
-customer_card_response=$(test_endpoint "POST" "/customer-cards" '{
-    "cust_surname":"Kawaii",
-    "cust_name":"Sakura",
-    "cust_patronymic":"Chan",
-    "phone_number":"+380123456789",
-    "city":"🌸 Kawaii City 🌸",
-    "street":"Rainbow Street 123",
-    "zip_code":"12345",
-    "percent":5
-}' 201 "Create Kawaii Customer Card")
-CUSTOMER_CARD_NUMBER=$(extract_field "$customer_card_response" "id")
-
-# Test Get Customer Cards List
-test_endpoint "GET" "/customer-cards" "" 200 "List All Precious Customer Cards"
-
-# Test Get Customer Card by Number
-if [ -n "$CUSTOMER_CARD_NUMBER" ]; then
-    test_endpoint "GET" "/customer-cards/$CUSTOMER_CARD_NUMBER" "" 200 "Get Customer Card by Magic Number"
-
-    # Test Update Customer Card
-    test_endpoint "PATCH" "/customer-cards/$CUSTOMER_CARD_NUMBER" '{"percent":10}' 200 "Update Card with More Love"
-fi
-
-echo
-
-echo -e "${BLUE}👥 === KAWAII EMPLOYEE ENDPOINTS === 👥${NC}"
-
-# Test Employee Creation
-print_status "INFO" "Testing Employee endpoints with friendship! ٩(◕‿◕)۶"
-employee_response=$(test_endpoint "POST" "/employees" '{
-    "empl_surname":"Sakura",
-    "empl_name":"Kawaii",
-    "empl_patronymic":"Chan",
-    "empl_role":"cashier",
-    "salary":25000.50,
-    "date_of_birth":"1995-03-15",
-    "date_of_start":"2020-01-10",
-    "phone_number":"+380987654321",
-    "city":"🌸 Kawaii City 🌸",
-    "street":"Rainbow Street 123",
-    "zip_code":"12345"
-}' 201 "Hire Kawaii Employee")
-EMPLOYEE_ID=$(extract_field "$employee_response" "id")
-
-# Test Get Employees List
-test_endpoint "GET" "/employees" "" 200 "List All Amazing Employees"
-
-# Test Get Employee by ID
-if [ -n "$EMPLOYEE_ID" ]; then
-    test_endpoint "GET" "/employees/$EMPLOYEE_ID" "" 200 "Get Employee by Magical ID"
-
-    # Test Update Employee
-    test_endpoint "PATCH" "/employees/$EMPLOYEE_ID" '{"salary":26000.00}' 200 "Give Employee a Kawaii Raise"
-fi
-
-echo
-
-echo -e "${PURPLE}📦 === KAWAII PRODUCT ENDPOINTS === 📦${NC}"
-
-# Test Product Creation (requires category)
-print_status "INFO" "Testing Product endpoints with sparkles! ✨"
-if [ -n "$CATEGORY_ID" ]; then
-    product_response=$(test_endpoint "POST" "/products" "{
-        \"category_id\":$CATEGORY_ID,
-        \"name\":\"🌸 Kawaii Test Product 🌸\",
-        \"characteristics\":\"Super kawaii product with magical properties ✨\"
-    }" 201 "Create Magical Product")
-    PRODUCT_ID=$(extract_id "$product_response")
-
-    # Test Get Products List
-    test_endpoint "GET" "/products" "" 200 "List All Wonderful Products"
-
-    # Test Get Product by ID
-    if [ -n "$PRODUCT_ID" ]; then
-        test_endpoint "GET" "/products/$PRODUCT_ID" "" 200 "Get Product by Sparkly ID"
-
-        # Test Update Product
-        test_endpoint "PATCH" "/products/$PRODUCT_ID" '{"name":"🌸 Super Kawaii Product 🌸"}' 200 "Make Product Even More Kawaii"
-
-        # Test Get Products by Category
-        test_endpoint "GET" "/products/by-category/$CATEGORY_ID" "" 200 "Get Products by Kawaii Category"
+    # Check if python3 is available for JSON validation
+    if ! command -v python3 &> /dev/null; then
+        echo -e "${YELLOW}🐍 Python3 not found. JSON validation will be skipped (´･ω･')${NC}"
     fi
 
-    # Test Search Products by Name
-    test_endpoint "GET" "/products/search?name=Kawaii" "" 200 "Search for Kawaii Products"
-fi
-
-echo
-
-echo -e "${YELLOW}🏪 === KAWAII STORE PRODUCT ENDPOINTS === 🏪${NC}"
-
-# Test Store Product Creation (requires product)
-print_status "INFO" "Testing Store Product endpoints with joy! ヽ(´▽｀)/"
-if [ -n "$PRODUCT_ID" ]; then
-    store_product_response=$(test_endpoint "POST" "/store-products" "{
-        \"product_id\":$PRODUCT_ID,
-        \"selling_price\":29.99,
-        \"products_number\":100,
-        \"promotional_product\":false
-    }" 201 "Add Product to Kawaii Store")
-    STORE_PRODUCT_UPC=$(extract_field "$store_product_response" "upc")
-
-    # Test Get Store Products List
-    test_endpoint "GET" "/store-products" "" 200 "List All Store Treasures"
-
-    # Test Get Store Products with Details
-    test_endpoint "GET" "/store-products/details" "" 200 "Get Store Products with Kawaii Details"
-
-    if [ -n "$STORE_PRODUCT_UPC" ]; then
-        # Test Get Store Product by UPC
-        test_endpoint "GET" "/store-products/$STORE_PRODUCT_UPC" "" 200 "Get Store Product by Magic UPC"
-
-        # Test Update Store Product
-        test_endpoint "PATCH" "/store-products/$STORE_PRODUCT_UPC" '{"selling_price":34.99}' 200 "Update Product Price with Love"
-
-        # Test Stock Check
-        test_endpoint "GET" "/store-products/$STORE_PRODUCT_UPC/stock-check?quantity=10" "" 200 "Check Kawaii Stock Availability"
-
-        # Test Quantity Update
-        test_endpoint "PATCH" "/store-products/$STORE_PRODUCT_UPC/quantity" '{"quantity_change":50}' 200 "Add More Kawaii Products"
-
-        # Test Delivery Update
-        test_endpoint "PATCH" "/store-products/$STORE_PRODUCT_UPC/delivery" '{"quantity_change":25,"new_price":39.99}' 200 "Receive Kawaii Delivery"
+    # Test API health first
+    if ! test_api_health; then
+        echo -e "${RED}💀 API is not available. Exiting with sadness (╥﹏╥)${NC}"
+        exit 1
     fi
 
-    # Test Get Store Products by Product ID
-    test_endpoint "GET" "/store-products/by-product/$PRODUCT_ID" "" 200 "Get Store Products by Magical Product ID"
-
-    # Test Get Store Products by Category
-    test_endpoint "GET" "/store-products/by-category/$CATEGORY_ID" "" 200 "Get Store Products by Kawaii Category"
-
-    # Test Search Store Products by Name
-    test_endpoint "GET" "/store-products/search?name=Kawaii" "" 200 "Search for Kawaii Store Products"
-
-    # Test Get Promotional Products
-    test_endpoint "GET" "/store-products/promotional" "" 200 "Get Special Promotional Kawaii Products"
-fi
-
-echo
-
-echo -e "${GREEN}🧾 === KAWAII RECEIPT ENDPOINTS === 🧾${NC}"
-
-# Test Receipt Creation (requires employee)
-# Test Receipt Creation
-print_status "INFO" "Testing Receipt endpoints with happiness! (◡‿◡)♡"
-
-# Test Get Receipts List
-test_endpoint "GET" "/receipts" "" 200 "List All Beautiful Receipts"
-
-# Test Complete Receipt Creation with items (preferred method)
-if [ -n "$EMPLOYEE_ID" ] && [ -n "$STORE_PRODUCT_UPC" ] && [ -n "$CUSTOMER_CARD_NUMBER" ]; then
-    complete_receipt_response=$(test_endpoint "POST" "/receipts/complete" "{
-        \"employee_id\":\"$EMPLOYEE_ID\",
-        \"card_number\":\"$CUSTOMER_CARD_NUMBER\",
-        \"print_date\":\"2024-01-15\",
-        \"items\":[{
-            \"upc\":\"$STORE_PRODUCT_UPC\",
-            \"product_number\":3,
-            \"selling_price\":39.99
-        }]
-    }" 201 "Create Complete Kawaii Receipt with Items")
-    RECEIPT_NUMBER=$(extract_field "$complete_receipt_response" "id")
-
-    # Test Get Receipt by ID
-    if [ -n "$RECEIPT_NUMBER" ]; then
-        test_endpoint "GET" "/receipts/$RECEIPT_NUMBER" "" 200 "Get Receipt by Magic Number"
-
-        # Test Update Receipt
-        test_endpoint "PATCH" "/receipts/$RECEIPT_NUMBER" '{"sum_total":169.99}' 200 "Update Receipt with More Love"
-    fi
-
-    # Create a second complete receipt for additional testing
-    if [ -n "$STORE_PRODUCT_UPC" ]; then
-        complete_receipt_response2=$(test_endpoint "POST" "/receipts/complete" "{
-            \"employee_id\":\"$EMPLOYEE_ID\",
-            \"print_date\":\"2024-01-16\",
-            \"items\":[{
-                \"upc\":\"$STORE_PRODUCT_UPC\",
-                \"product_number\":2,
-                \"selling_price\":39.99
-            }]
-        }" 201 "Create Second Complete Kawaii Receipt")
-        RECEIPT_NUMBER_2=$(extract_field "$complete_receipt_response2" "id")
-    fi
-fi
-
-echo
-
-echo -e "${RED}💰 === KAWAII SALE ENDPOINTS === 💰${NC}"
-
-# Test Sale Creation (requires UPC and receipt)
-# Test Sale Creation and Management
-print_status "INFO" "Testing Sale endpoints with excitement! ✧*｡ヾ(｡>﹏<｡)ﾉ✧*｡"
-
-# Test Get Sales List
-test_endpoint "GET" "/sales" "" 200 "List All Amazing Sales"
-
-# Test Get Sales with Details
-test_endpoint "GET" "/sales/details" "" 200 "Get Sales with Kawaii Details"
-
-if [ -n "$STORE_PRODUCT_UPC" ] && [ -n "$RECEIPT_NUMBER" ]; then
-    # Test Get Sale by Key (should exist from complete receipt creation)
-    test_endpoint "GET" "/sales/$STORE_PRODUCT_UPC/$RECEIPT_NUMBER" "" 200 "Get Sale by Magic Key"
-
-    # Test Get Sales by Receipt
-    test_endpoint "GET" "/sales/by-receipt/$RECEIPT_NUMBER" "" 200 "Get Sales by Kawaii Receipt"
-
-    # Test Get Sales by Receipt with Details
-    test_endpoint "GET" "/sales/by-receipt/$RECEIPT_NUMBER/details" "" 200 "Get Sales by Receipt with Kawaii Details"
-
-    # Test Get Sales by UPC
-    test_endpoint "GET" "/sales/by-upc/$STORE_PRODUCT_UPC" "" 200 "Get Sales by Magic UPC"
-
-    # Test Update Sale
-    test_endpoint "PATCH" "/sales/$STORE_PRODUCT_UPC/$RECEIPT_NUMBER" '{"product_number":4}' 200 "Update Sale with More Kawaii"
-
-    # Test Receipt Total Calculation
-    test_endpoint "GET" "/receipts/$RECEIPT_NUMBER/total" "" 200 "Calculate Kawaii Receipt Total"
-
-    # Test Top Selling Products
-    test_endpoint "GET" "/sales/top-products?limit=5" "" 200 "Get Top Kawaii Products"
-
-    # Note: Additional sale creation is already tested through complete receipt creation
-
-    # Test Sales Stats by Product
-    if [ -n "$PRODUCT_ID" ]; then
-        test_endpoint "GET" "/sales/stats/product/$PRODUCT_ID?start_date=2024-01-01&end_date=2024-12-31" "" 200 "Get Kawaii Product Sales Stats"
-    fi
-fi
-
-echo
-
-echo -e "${PURPLE}❌ === KAWAII ERROR HANDLING TESTS === ❌${NC}"
-
-print_status "INFO" "Testing error handling with patience! (´･ω･')"
-
-# Test invalid endpoints
-test_endpoint "GET" "/invalid-endpoint" "" 404 "Try Invalid Endpoint (Expected Failure)"
-
-# Test invalid IDs
-test_endpoint "GET" "/categories/99999" "" 404 "Get Non-existent Category (Expected Failure)"
-test_endpoint "GET" "/products/99999" "" 404 "Get Non-existent Product (Expected Failure)"
-test_endpoint "GET" "/employees/INV" "" 400 "Get Employee with Invalid ID Format (Expected Failure)"
-test_endpoint "GET" "/customer-cards/INVALID" "" 400 "Get Customer Card with Invalid Number (Expected Failure)"
-
-# Test invalid data formats
-test_endpoint "POST" "/categories" '{"invalid":"data"}' 400 "Create Category with Invalid Data (Expected Failure)"
-test_endpoint "POST" "/categories" '{"name":""}' 400 "Create Category with Empty Name (Expected Failure)"
-test_endpoint "POST" "/employees" '{"empl_name":"Test"}' 400 "Create Employee with Missing Fields (Expected Failure)"
-
-# Test boundary conditions
-test_endpoint "POST" "/products" '{"category_id":-1,"name":"Test","characteristics":"Test"}' 400 "Create Product with Negative Category ID (Expected Failure)"
-
-# Test malformed JSON
-test_endpoint "POST" "/categories" '{"name":}' 400 "Create Category with Malformed JSON (Expected Failure)"
-test_endpoint "POST" "/categories" '{"name":"Test",' 400 "Create Category with Incomplete JSON (Expected Failure)"
-
-echo
-
-echo -e "${CYAN}🔍 === ADDITIONAL KAWAII VALIDATION TESTS === 🔍${NC}"
-
-print_status "INFO" "Testing additional validation with thoroughness! (｡◕‿‿◕｡)"
-
-# Test phone number validation
-test_endpoint "POST" "/employees" '{"empl_surname":"Test","empl_name":"User","empl_role":"cashier","salary":25000,"date_of_birth":"1990-01-01","date_of_start":"2020-01-01","phone_number":"+38012345678","city":"City","street":"Street","zip_code":"12345"}' 400 "Create Employee with Invalid Phone Length (Expected Failure)"
-
-# Test date validation
-test_endpoint "POST" "/employees" '{"empl_surname":"Test","empl_name":"User","empl_role":"cashier","salary":25000,"date_of_birth":"2010-01-01","date_of_start":"2020-01-01","phone_number":"+380123456789","city":"City","street":"Street","zip_code":"12345"}' 400 "Create Employee Under 18 (Expected Failure)"
-test_endpoint "POST" "/receipts" '{"employee_id":"REfBl7RUh1","print_date":"2025-12-31","sum_total":100}' 400 "Create Receipt with Future Date (Expected Failure)"
-
-# Test UPC format validation
-test_endpoint "GET" "/store-products/INVALID" "" 400 "Get Store Product with Invalid UPC (Expected Failure)"
-test_endpoint "POST" "/sales" '{"upc":"INVALID","receipt_number":"1234567890","product_number":1,"selling_price":10.00}' 400 "Create Sale with Invalid UPC (Expected Failure)"
-
-echo
-
-echo -e "${PINK}🧹 === KAWAII CLEANUP TIME === 🧹${NC}"
-
-print_status "INFO" "Cleaning up test data with care! (◕‿◕)♡"
-
-# Delete in proper order to handle foreign key constraints
-# 1. Delete all sales for receipts first (they reference store products and receipts)
-if [ -n "$RECEIPT_NUMBER" ]; then
-    test_endpoint "DELETE" "/sales/by-receipt/$RECEIPT_NUMBER" "" 200 "Delete All Sales for Kawaii Receipt"
-fi
-
-if [ -n "$RECEIPT_NUMBER_2" ]; then
-    test_endpoint "DELETE" "/sales/by-receipt/$RECEIPT_NUMBER_2" "" 200 "Delete All Sales for Second Kawaii Receipt"
-fi
-
-# 2. Delete receipts (they reference employees and customer cards)
-if [ -n "$RECEIPT_NUMBER" ]; then
-    test_endpoint "DELETE" "/receipts/$RECEIPT_NUMBER" "" 200 "Delete Kawaii Receipt"
-fi
-
-if [ -n "$RECEIPT_NUMBER_2" ]; then
-    test_endpoint "DELETE" "/receipts/$RECEIPT_NUMBER_2" "" 200 "Delete Second Kawaii Receipt"
-fi
-
-# 3. Delete store products (they reference products)
-if [ -n "$STORE_PRODUCT_UPC" ]; then
-    test_endpoint "DELETE" "/store-products/$STORE_PRODUCT_UPC" "" 200 "Remove Product from Kawaii Store"
-fi
-
-# 4. Delete products (they reference categories)
-if [ -n "$PRODUCT_ID" ]; then
-    test_endpoint "DELETE" "/products/$PRODUCT_ID" "" 200 "Delete Kawaii Product"
-fi
-
-# 5. Delete categories (no dependencies)
-if [ -n "$CATEGORY_ID" ]; then
-    test_endpoint "DELETE" "/categories/$CATEGORY_ID" "" 200 "Delete Kawaii Category"
-fi
-
-# 6. Delete employees and customer cards (no dependencies from our test data)
-if [ -n "$EMPLOYEE_ID" ]; then
-    test_endpoint "DELETE" "/employees/$EMPLOYEE_ID" "" 200 "Say Goodbye to Kawaii Employee"
-fi
-
-if [ -n "$CUSTOMER_CARD_NUMBER" ]; then
-    test_endpoint "DELETE" "/customer-cards/$CUSTOMER_CARD_NUMBER" "" 200 "Delete Kawaii Customer Card"
-fi
-
-echo
-
-echo -e "${PINK}🌸✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨🌸${NC}"
-echo -e "${PINK}✨                                                      ✨${NC}"
-echo -e "${PINK}✨              🌟 KAWAII TEST SUMMARY 🌟              ✨${NC}"
-echo -e "${PINK}✨                                                      ✨${NC}"
-echo -e "${PINK}🌸✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨🌸${NC}"
-echo
-echo -e "${CYAN}📊 Total Kawaii Tests: ${YELLOW}$TOTAL_TESTS${NC} ✨"
-echo -e "${GREEN}🎉 Passed Tests: ${YELLOW}$PASSED_TESTS${NC} (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧"
-
-if [ $FAILED_TESTS -gt 0 ]; then
-    echo -e "${RED}💔 Failed Tests: ${YELLOW}$FAILED_TESTS${NC} (╥﹏╥)"
-else
-    echo -e "${GREEN}💖 Failed Tests: ${YELLOW}0${NC} ✨ Perfect! ✨"
-fi
-
-# Calculate success rate
-if [ $TOTAL_TESTS -gt 0 ]; then
-    SUCCESS_RATE=$((PASSED_TESTS * 100 / TOTAL_TESTS))
-    echo -e "${BLUE}📈 Kawaii Success Rate: ${YELLOW}${SUCCESS_RATE}%${NC} 🌟"
-fi
-
-if [ ${#FAILED_TEST_DETAILS[@]} -gt 0 ]; then
-    echo
-    echo -e "${RED}😰 Failed Tests Details:${NC}"
-    for detail in "${FAILED_TEST_DETAILS[@]}"; do
-        echo -e "${RED}💔 $detail${NC}"
-    done
-    echo
-    echo -e "${YELLOW}🔧 Kawaii Troubleshooting Tips:${NC}"
-    echo -e "${CYAN}💡 1. Make sure the API server is running on http://localhost:8080 ✨${NC}"
-    echo -e "${CYAN}💡 2. Check database connectivity and schema (◕‿◕)${NC}"
-    echo -e "${CYAN}💡 3. Verify all required environment variables are set 🌟${NC}"
-    echo -e "${CYAN}💡 4. Check server logs for detailed error messages ♪(´▽｀)♪${NC}"
-fi
-
-echo
-
-echo -e "${PINK}🌸✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨🌸${NC}"
-echo -e "${PINK}✨                                                      ✨${NC}"
-echo -e "${PINK}✨              🎊 FINAL KAWAII RESULTS 🎊             ✨${NC}"
-echo -e "${PINK}✨                                                      ✨${NC}"
-echo -e "${PINK}🌸✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨🌸${NC}"
-
-if [ $FAILED_TESTS -eq 0 ]; then
-    echo -e "${GREEN}🎉✨ ALL TESTS PASSED WITH KAWAII PERFECTION! ✨🎉${NC}"
-    echo -e "${PINK}🌸 Your API is absolutely kawaii and working beautifully! 🌸${NC}"
-    echo -e "${CYAN}💖 Tested endpoints: Categories, Products, Store Products, Employees, Customer Cards, Receipts, Sales ♪(´▽｀)♪${NC}"
-    echo -e "${BLUE}🌟 Operations tested: CRUD, validation, error handling, edge cases ✨${NC}"
-
-    if [ $SUCCESS_RATE -eq 100 ]; then
-        echo -e "${PURPLE}🏆 PERFECT KAWAII SCORE! You're absolutely amazing! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧${NC}"
-    elif [ $SUCCESS_RATE -ge 95 ]; then
-        echo -e "${GREEN}🥇 EXCELLENT KAWAII WORK! Almost perfect! (◕‿◕)♡${NC}"
-    elif [ $SUCCESS_RATE -ge 90 ]; then
-        echo -e "${YELLOW}🥈 GREAT KAWAII JOB! Very good! ヽ(´▽｀)/${NC}"
-    fi
-
-    echo -e "${PINK}🌸 Testing completed with maximum kawaii love! 🌸${NC}"
-    exit 0
-else
-    echo -e "${RED}😰 SOME TESTS FAILED BUT DON'T GIVE UP! 😰${NC}"
-    echo -e "${YELLOW}💪 Every failure is a step towards kawaii success! Fighting! ٩(◕‿◕)۶${NC}"
-    echo -e "${PINK}💖 Please review the failed tests and fix them with love! (｡◕‿◕｡)${NC}"
-
-    if [ $SUCCESS_RATE -ge 80 ]; then
-        echo -e "${CYAN}🌟 You're doing great! Just a few more fixes needed! (◕‿◕)${NC}"
-    elif [ $SUCCESS_RATE -ge 60 ]; then
-        echo -e "${BLUE}💭 Good progress! Keep working on it! ♪(´▽｀)♪${NC}"
+    # Run tests based on arguments or run all
+    if [ $# -eq 0 ]; then
+        print_header "Running All Kawaii Tests"
+        test_categories
+        test_products
+        test_store_products
+        test_employees
+        test_customer_cards
+        test_receipts
+        test_sales
+        test_checks
+        test_error_handling
     else
-        echo -e "${PURPLE}🌸 Don't worry! Every expert was once a beginner! You can do it! 💪${NC}"
+        for arg in "$@"; do
+            case $arg in
+                categories)
+                    test_categories
+                    ;;
+                products)
+                    test_products
+                    ;;
+                store-products)
+                    test_store_products
+                    ;;
+                employees)
+                    test_employees
+                    ;;
+                customer-cards)
+                    test_customer_cards
+                    ;;
+                receipts)
+                    test_receipts
+                    ;;
+                sales)
+                    test_sales
+                    ;;
+                checks)
+                    test_checks
+                    ;;
+                errors)
+                    test_error_handling
+                    ;;
+                cleanup)
+                    cleanup_test_data
+                    ;;
+                *)
+                    echo -e "${RED}❌ Unknown test category: $arg (｡•́︿•̀｡)${NC}"
+                    echo -e "${CYAN}📝 Available: categories, products, store-products, employees, customer-cards, receipts, sales, checks, errors, cleanup${NC}"
+                    ;;
+            esac
+        done
     fi
 
-    echo -e "${PINK}🌸 Keep coding with kawaii spirit! 🌸${NC}"
-    exit 1
+    # Kawaii test summary
+    print_header "Kawaii Test Results"
+    echo -e "${CYAN}📊 Total Tests: $TOTAL_TESTS${NC}"
+    echo -e "${GREEN}✨ Passed: $PASSED_TESTS${NC}"
+    echo -e "${RED}💥 Failed: $FAILED_TESTS${NC}"
+
+    if [ $FAILED_TESTS -eq 0 ]; then
+        echo -e "${GREEN}🎉 All tests passed! Your API is absolutely kawaii! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧${NC}"
+        echo -e "${PINK}🌸 Perfect score! You're amazing! (´∀｀)♡${NC}"
+    elif [ $FAILED_TESTS -lt $((TOTAL_TESTS / 4)) ]; then
+        echo -e "${YELLOW}🌟 Most tests passed! Just a few tiny issues to fix! (◕‿◕)${NC}"
+        echo -e "${CYAN}💪 You're doing great! Keep it up! ٩(◕‿◕)۶${NC}"
+    else
+        echo -e "${RED}😰 Several tests failed, but don't give up! (｡•́︿•̀｡)${NC}"
+        echo -e "${PINK}💖 Every failure is a step towards success! Fighting! ٩(◕‿◕)۶${NC}"
+    fi
+
+    # Success rate
+    local success_rate=$((PASSED_TESTS * 100 / TOTAL_TESTS))
+    echo -e "${BLUE}📈 Success Rate: $success_rate%${NC}"
+
+    if [ $success_rate -ge 90 ]; then
+        echo -e "${GREEN}🏆 S Rank! Absolutely Perfect! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧${NC}"
+    elif [ $success_rate -ge 80 ]; then
+        echo -e "${CYAN}🥇 A Rank! Excellent work! (◕‿◕)♡${NC}"
+    elif [ $success_rate -ge 70 ]; then
+        echo -e "${YELLOW}🥈 B Rank! Good job! (´∀｀)${NC}"
+    else
+        echo -e "${PINK}🌸 Keep trying! You'll get there! (◕‿◕)${NC}"
+    fi
+
+    echo -e "${PINK}🌸 Testing completed with kawaii love! 🌸${NC}"
+}
+
+# Show kawaii help
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+    echo -e "${PINK}🌸 Kawaii API Testing Script Help 🌸${NC}"
+    echo ""
+    echo -e "${CYAN}Usage: $0 [category1] [category2] ...${NC}"
+    echo ""
+    echo -e "${BLUE}Available test categories:${NC}"
+    echo -e "${GREEN}  🏷️  categories      - Test category endpoints${NC}"
+    echo -e "${GREEN}  📦 products        - Test product endpoints${NC}"
+    echo -e "${GREEN}  🏪 store-products  - Test store product endpoints${NC}"
+    echo -e "${GREEN}  👥 employees       - Test employee endpoints${NC}"
+    echo -e "${GREEN}  💳 customer-cards  - Test customer card endpoints${NC}"
+    echo -e "${GREEN}  🧾 receipts        - Test receipt endpoints${NC}"
+    echo -e "${GREEN}  💰 sales           - Test sales endpoints${NC}"
+    echo -e "${GREEN}  ✅ checks          - Test check endpoints${NC}"
+    echo -e "${GREEN}  ❌ errors          - Test error handling${NC}"
+    echo -e "${GREEN}  🧹 cleanup         - Clean up test data${NC}"
+    echo ""
+    echo -e "${YELLOW}Examples:${NC}"
+    echo -e "${CYAN}  $0                    # Run all kawaii tests ✨${NC}"
+    echo -e "${CYAN}  $0 categories         # Test only categories 🏷️${NC}"
+    echo -e "${CYAN}  $0 products sales     # Test products and sales 📦💰${NC}"
+    echo ""
+    echo -e "${PINK}Have fun testing! (◕‿◕)♡${NC}"
+    exit 0
 fi
+
+# Run main function with all arguments
+main "$@"

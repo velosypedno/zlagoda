@@ -33,7 +33,6 @@ const StoreProducts = () => {
   const [editingStoreProduct, setEditingStoreProduct] =
     useState<StoreProductWithDetails | null>(null);
   const [formData, setFormData] = useState<StoreProductCreate>({
-    upc_prom: "",
     product_id: 0,
     selling_price: 0,
     products_number: 0,
@@ -192,9 +191,6 @@ const StoreProducts = () => {
 
   const handlePromotionalCheckboxChange = (checked: boolean) => {
     const newFormData = { ...formData, promotional_product: checked };
-    if (!checked) {
-      newFormData.upc_prom = "";
-    }
     setFormData(newFormData);
   };
 
@@ -213,7 +209,7 @@ const StoreProducts = () => {
     try {
       if (editingStoreProduct) {
         const updateData: StoreProductUpdate = {
-          upc_prom: formData.upc_prom || undefined,
+          upc_prom: undefined,
           product_id: formData.product_id,
           selling_price: formData.selling_price,
           products_number: formData.products_number,
@@ -223,14 +219,13 @@ const StoreProducts = () => {
       } else {
         await createStoreProduct({
           ...formData,
-          upc_prom: formData.upc_prom || undefined,
+          upc_prom: undefined,
         });
       }
 
       setShowForm(false);
       setEditingStoreProduct(null);
       setFormData({
-        upc_prom: "",
         product_id: 0,
         selling_price: 0,
         products_number: 0,
@@ -247,7 +242,6 @@ const StoreProducts = () => {
   const handleEdit = (storeProduct: StoreProductWithDetails) => {
     setEditingStoreProduct(storeProduct);
     setFormData({
-      upc_prom: storeProduct.upc_prom || "",
       product_id: storeProduct.product_id,
       selling_price: storeProduct.selling_price,
       products_number: storeProduct.products_number,
@@ -271,7 +265,6 @@ const StoreProducts = () => {
     setShowForm(false);
     setEditingStoreProduct(null);
     setFormData({
-      upc_prom: "",
       product_id: 0,
       selling_price: 0,
       products_number: 0,
@@ -538,22 +531,6 @@ const StoreProducts = () => {
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Promotional UPC
-                </label>
-                <input
-                  type="text"
-                  name="upc_prom"
-                  value={formData.upc_prom}
-                  onChange={(e) =>
-                    setFormData({ ...formData, upc_prom: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  maxLength={12}
                 />
               </div>
             </div>

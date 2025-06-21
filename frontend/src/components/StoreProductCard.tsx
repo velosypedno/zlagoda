@@ -135,13 +135,6 @@ const StoreProductCard = ({
         </div>
       </div>
 
-      {storeProduct.upc_prom && (
-        <div className="mb-4">
-          <span className="text-sm font-medium text-gray-600">Promotional UPC:</span>
-          <p className="text-gray-800 mt-1">{storeProduct.upc_prom}</p>
-        </div>
-      )}
-
       {isManager && (
         <div className="border-t pt-4">
           <div className="flex flex-col gap-2">
