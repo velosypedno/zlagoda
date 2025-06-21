@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { createCheck } from "../api/checks";
-import type { CheckCreate } from "../types/check";
+import { createReceiptComplete } from "../api/receipts";
+import type { ReceiptCreateComplete } from "../types/receipt";
 import type { StoreProductWithDetails } from "../types/store_product";
 import type { Product } from "../types/product";
 import type { CustomerCard } from "../types/customer_card";
@@ -10,10 +10,12 @@ import { fetchProducts } from "../api/products";
 import { getCustomerCards } from "../api/customer_cards";
 import { fetchEmployees } from "../api/employees";
 
-const CreateCheck = () => {
+const CreateReceipt = () => {
   const [employeeId, setEmployeeId] = useState("");
   const [cardNumber, setCardNumber] = useState<string | undefined>(undefined);
-  const [items, setItems] = useState<{ upc: string; product_number: number }[]>([]);
+  const [items, setItems] = useState<{ upc: string; product_number: number }[]>(
+    [],
+  );
   const [products, setProducts] = useState<StoreProductWithDetails[]>([]);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [customerCards, setCustomerCards] = useState<CustomerCard[]>([]);
@@ -24,10 +26,10 @@ const CreateCheck = () => {
   const itemRefs = useRef<(HTMLSelectElement | null)[]>([]);
 
   useEffect(() => {
-    fetchStoreProductsWithDetails().then(res => setProducts(res.data || []));
-    fetchProducts().then(res => setAllProducts(res.data || []));
+    fetchStoreProductsWithDetails().then((res) => setProducts(res.data || []));
+    fetchProducts().then((res) => setAllProducts(res.data || []));
     getCustomerCards().then(setCustomerCards);
-    fetchEmployees().then(res => setEmployees(res.data || []));
+    fetchEmployees().then((res) => setEmployees(res.data || []));
   }, []);
 
   const addItem = () => {
@@ -37,12 +39,19 @@ const CreateCheck = () => {
     }
     setItems([...items, { upc: "", product_number: 1 }]);
     setTimeout(() => {
-      if (itemRefs.current[items.length]) itemRefs.current[items.length]?.focus();
+      if (itemRefs.current[items.length])
+        itemRefs.current[items.length]?.focus();
     }, 100);
   };
 
-  const updateItem = (idx: number, field: "upc" | "product_number", value: any) => {
-    setItems(items.map((item, i) => i === idx ? { ...item, [field]: value } : item));
+  const updateItem = (
+    idx: number,
+    field: "upc" | "product_number",
+    value: any,
+  ) => {
+    setItems(
+      items.map((item, i) => (i === idx ? { ...item, [field]: value } : item)),
+    );
   };
 
   const removeItem = (idx: number) => {
@@ -51,7 +60,7 @@ const CreateCheck = () => {
 
   // Calculate price for an item
   const getItemPrice = (upc: string, quantity: number) => {
-    const product = products.find(p => p.upc === upc);
+    const product = products.find((p) => p.upc === upc);
     if (!product) return { price: 0, isPromo: false, total: 0 };
     let price = product.selling_price;
     let isPromo = product.promotional_product;
@@ -74,7 +83,9 @@ const CreateCheck = () => {
       setLoading(false);
       return;
     }
-    if (items.some(i => !i.upc || !i.product_number || i.product_number < 1)) {
+    if (
+      items.some((i) => !i.upc || !i.product_number || i.product_number < 1)
+    ) {
       setError("Please select a product and quantity for each item.");
       setLoading(false);
       return;
@@ -82,29 +93,37 @@ const CreateCheck = () => {
     try {
       const today = new Date();
       const yyyy = today.getFullYear();
-      const mm = String(today.getMonth() + 1).padStart(2, '0');
-      const dd = String(today.getDate()).padStart(2, '0');
+      const mm = String(today.getMonth() + 1).padStart(2, "0");
+      const dd = String(today.getDate()).padStart(2, "0");
       const print_date = `${yyyy}-${mm}-${dd}`;
-      const check: CheckCreate = {
+      const receipt: ReceiptCreateComplete = {
         employee_id: employeeId,
-        card_number: cardNumber || undefined,
+        card_number: cardNumber || null,
         print_date,
-        items: items.map(i => {
+        items: items.map((i) => {
           const { price } = getItemPrice(i.upc, i.product_number);
           return {
             upc: i.upc,
-            product_number: Number(i.product_number),
+            product_number: parseInt(i.product_number.toString()),
             selling_price: price,
           };
         }),
       };
-      const res = await createCheck(check);
-      setSuccess(res.data);
+      console.log("Sending receipt data:", JSON.stringify(receipt, null, 2));
+      const res = await createReceiptComplete(receipt);
+      setSuccess({ receipt_number: res.data.id });
       setItems([]);
       setEmployeeId("");
       setCardNumber(undefined);
     } catch (err: any) {
-      setError(err?.response?.data?.error || "Failed to create check");
+      console.error("Receipt creation error:", err);
+      console.error("Error response:", err?.response);
+      const errorMessage =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to create receipt";
+      setError(`Error: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -117,21 +136,30 @@ const CreateCheck = () => {
   }, 0);
 
   // Get discount percent from selected card
-  const selectedCard = customerCards.find(card => card.card_number === cardNumber);
+  const selectedCard = customerCards.find(
+    (card) => card.card_number === cardNumber,
+  );
   const discountPercent = selectedCard ? selectedCard.percent : 0;
   const discountAmount = subtotal * (discountPercent / 100);
   const total = subtotal - discountAmount;
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white rounded shadow">
-      <h1 className="text-2xl font-bold mb-4">Create Check (Receipt)</h1>
-      {error && <div className="bg-red-100 text-red-700 p-2 mb-2 rounded">{error}</div>}
+      <h1 className="text-2xl font-bold mb-4">Create Receipt</h1>
+      {error && (
+        <div className="bg-red-100 text-red-700 p-2 mb-2 rounded">{error}</div>
+      )}
       {success && (
         <div className="bg-green-100 text-green-700 p-2 mb-2 rounded flex flex-col gap-2">
           <div>
-            Check created! Receipt: <b>{success.receipt_number}</b>, Total: <b>{success.total_sum}</b>, VAT: <b>{success.vat}</b>
+            Receipt created! Receipt Number: <b>{success.receipt_number}</b>
           </div>
-          <button className="bg-blue-500 text-white px-3 py-1 rounded w-fit" onClick={() => setSuccess(null)}>Create another check</button>
+          <button
+            className="bg-blue-500 text-white px-3 py-1 rounded w-fit"
+            onClick={() => setSuccess(null)}
+          >
+            Create another receipt
+          </button>
         </div>
       )}
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -139,38 +167,51 @@ const CreateCheck = () => {
           <label className="font-medium">Cashier (Employee) *</label>
           <select
             value={employeeId}
-            onChange={e => setEmployeeId(e.target.value)}
+            onChange={(e) => setEmployeeId(e.target.value)}
             className="w-full border p-2 rounded mt-1"
             required
           >
             <option value="">Select cashier...</option>
-            {employees.map(emp => (
+            {employees.map((emp) => (
               <option key={emp.employee_id} value={emp.employee_id}>
-                {emp.empl_surname} {emp.empl_name} {emp.empl_patronymic || ""} ({emp.employee_id})
+                {emp.empl_surname} {emp.empl_name} {emp.empl_patronymic || ""} (
+                {emp.employee_id})
               </option>
             ))}
           </select>
-          <div className="text-xs text-gray-500 mt-1">Select the cashier responsible for this check.</div>
+          <div className="text-xs text-gray-500 mt-1">
+            Select the cashier responsible for this receipt.
+          </div>
         </div>
         <div>
           <label className="font-medium">Customer Card (optional)</label>
           <select
             value={cardNumber || ""}
-            onChange={e => setCardNumber(e.target.value || undefined)}
+            onChange={(e) => setCardNumber(e.target.value || undefined)}
             className="w-full border p-2 rounded mt-1"
           >
             <option value="">No card</option>
-            {customerCards.map(card => (
+            {customerCards.map((card) => (
               <option key={card.card_number} value={card.card_number}>
-                {card.cust_surname} {card.cust_name} {card.cust_patronymic || ""} ({card.card_number}) — {card.percent}%
+                {card.cust_surname} {card.cust_name}{" "}
+                {card.cust_patronymic || ""} ({card.card_number}) —{" "}
+                {card.percent}%
               </option>
             ))}
           </select>
-          <div className="text-xs text-gray-500 mt-1">If the customer has a loyalty card, select it to apply a discount.</div>
+          <div className="text-xs text-gray-500 mt-1">
+            If the customer has a loyalty card, select it to apply a discount.
+          </div>
         </div>
         <div>
           <label className="font-medium">Items</label>
-          <button type="button" onClick={addItem} className="ml-2 px-2 py-1 bg-blue-500 text-white rounded text-sm">Add Item</button>
+          <button
+            type="button"
+            onClick={addItem}
+            className="ml-2 px-2 py-1 bg-blue-500 text-white rounded text-sm"
+          >
+            Add Item
+          </button>
           <div className="overflow-x-auto mt-2">
             <table className="min-w-full border text-sm">
               <thead>
@@ -184,25 +225,39 @@ const CreateCheck = () => {
               </thead>
               <tbody>
                 {items.map((item, idx) => {
-                  const { price, isPromo, total } = getItemPrice(item.upc, item.product_number);
-                  const product = products.find(p => p.upc === item.upc);
-                  const characteristics = product ? allProducts.find(prod => prod.id === product.product_id)?.characteristics : undefined;
+                  const { price, isPromo, total } = getItemPrice(
+                    item.upc,
+                    item.product_number,
+                  );
+                  const product = products.find((p) => p.upc === item.upc);
+                  const characteristics = product
+                    ? allProducts.find((prod) => prod.id === product.product_id)
+                        ?.characteristics
+                    : undefined;
                   return (
                     <tr key={idx}>
                       <td className="border px-2 py-1">
                         <select
-                          ref={el => { itemRefs.current[idx] = el; }}
+                          ref={(el) => {
+                            itemRefs.current[idx] = el;
+                          }}
                           value={item.upc}
-                          onChange={e => updateItem(idx, "upc", e.target.value)}
+                          onChange={(e) =>
+                            updateItem(idx, "upc", e.target.value)
+                          }
                           className="border p-1 rounded w-full"
                         >
                           <option value="">Select product</option>
-                          {products.map(p => (
-                            <option key={p.upc} value={p.upc}>{p.product_name} ({p.upc})</option>
+                          {products.map((p) => (
+                            <option key={p.upc} value={p.upc}>
+                              {p.product_name} ({p.upc})
+                            </option>
                           ))}
                         </select>
                         {characteristics && (
-                          <div className="text-xs text-gray-500 mt-1">{characteristics}</div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {characteristics}
+                          </div>
                         )}
                       </td>
                       <td className="border px-2 py-1">
@@ -210,31 +265,44 @@ const CreateCheck = () => {
                           type="number"
                           min={1}
                           value={item.product_number}
-                          onChange={e => updateItem(idx, "product_number", e.target.value)}
+                          onChange={(e) =>
+                            updateItem(idx, "product_number", e.target.value)
+                          }
                           className="w-16 border p-1 rounded"
                         />
                       </td>
                       <td className="border px-2 py-1 text-right">
-                        {item.upc && product && (
-                          isPromo ? (
-                            <span className="text-orange-600 font-semibold">${price.toFixed(2)} <span className="text-xs">(Promo -20%)</span></span>
+                        {item.upc &&
+                          product &&
+                          (isPromo ? (
+                            <span className="text-orange-600 font-semibold">
+                              ${price.toFixed(2)}{" "}
+                              <span className="text-xs">(Promo -20%)</span>
+                            </span>
                           ) : (
                             <span>${price.toFixed(2)}</span>
-                          )
-                        )}
+                          ))}
                       </td>
                       <td className="border px-2 py-1 text-right">
                         {item.upc ? `$${total.toFixed(2)}` : ""}
                       </td>
                       <td className="border px-2 py-1 text-center">
-                        <button type="button" onClick={() => removeItem(idx)} className="text-red-500 hover:underline">Remove</button>
+                        <button
+                          type="button"
+                          onClick={() => removeItem(idx)}
+                          className="text-red-500 hover:underline"
+                        >
+                          Remove
+                        </button>
                       </td>
                     </tr>
                   );
                 })}
                 {items.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="text-center text-gray-400 py-4">No items added.</td>
+                    <td colSpan={5} className="text-center text-gray-400 py-4">
+                      No items added.
+                    </td>
                   </tr>
                 )}
               </tbody>
@@ -242,16 +310,26 @@ const CreateCheck = () => {
           </div>
         </div>
         <div className="text-right font-bold text-lg mt-4">
-          Subtotal: ${subtotal.toFixed(2)}<br />
+          Subtotal: ${subtotal.toFixed(2)}
+          <br />
           {discountPercent > 0 && (
-            <span className="text-green-700">Discount ({discountPercent}%): -${discountAmount.toFixed(2)}</span>
-          )}<br />
+            <span className="text-green-700">
+              Discount ({discountPercent}%): -${discountAmount.toFixed(2)}
+            </span>
+          )}
+          <br />
           Final Total: ${total.toFixed(2)}
         </div>
-        <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded mt-2" disabled={loading}>{loading ? "Creating..." : "Create Check"}</button>
+        <button
+          type="submit"
+          className="bg-green-600 text-white px-4 py-2 rounded mt-2"
+          disabled={loading}
+        >
+          {loading ? "Creating..." : "Create Receipt"}
+        </button>
       </form>
     </div>
   );
 };
 
-export default CreateCheck; 
+export default CreateReceipt;

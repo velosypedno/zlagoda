@@ -34,11 +34,12 @@ type HandlerContainer struct {
 	EmployeeDeleteDELETEHandler gin.HandlerFunc
 	EmployeeUpdatePATCHHandler  gin.HandlerFunc
 
-	ReceiptCreatePOSTHandler   gin.HandlerFunc
-	ReceiptRetrieveGETHandler  gin.HandlerFunc
-	ReceiptsListGETHandler     gin.HandlerFunc
-	ReceiptDeleteDELETEHandler gin.HandlerFunc
-	ReceiptUpdatePATCHHandler  gin.HandlerFunc
+	ReceiptCreatePOSTHandler         gin.HandlerFunc
+	ReceiptCreateCompletePOSTHandler gin.HandlerFunc
+	ReceiptRetrieveGETHandler        gin.HandlerFunc
+	ReceiptsListGETHandler           gin.HandlerFunc
+	ReceiptDeleteDELETEHandler       gin.HandlerFunc
+	ReceiptUpdatePATCHHandler        gin.HandlerFunc
 
 	ProductCreatePOSTHandler     gin.HandlerFunc
 	ProductRetrieveGETHandler    gin.HandlerFunc
@@ -116,9 +117,6 @@ func BuildHandlerContainer(c *config.Config) (*HandlerContainer, error) {
 	employeeRepo := repos.NewEmployeeRepo(db)
 	employeeService := services.NewEmployeeService(employeeRepo)
 
-	receiptRepo := repos.NewReceiptRepo(db)
-	receiptService := services.NewReceiptService(receiptRepo)
-
 	productRepo := repos.NewProductRepo(db)
 	productService := services.NewProductService(productRepo)
 
@@ -128,8 +126,8 @@ func BuildHandlerContainer(c *config.Config) (*HandlerContainer, error) {
 	saleRepo := repos.NewSaleRepo(db)
 	saleService := services.NewSaleService(saleRepo)
 
-	checkRepo := repos.NewCheckRepo(db)
-	checkService := services.NewCheckService(checkRepo)
+	receiptRepo := repos.NewReceiptRepo(db)
+	receiptService := services.NewReceiptService(receiptRepo, saleRepo, storeProductRepo)
 
 	return &HandlerContainer{
 		DB: db,
@@ -152,11 +150,12 @@ func BuildHandlerContainer(c *config.Config) (*HandlerContainer, error) {
 		EmployeeDeleteDELETEHandler: handlers.NewEmployeeDeleteDELETEHandler(employeeService),
 		EmployeeUpdatePATCHHandler:  handlers.NewEmployeeUpdatePATCHHandler(employeeService),
 
-		ReceiptCreatePOSTHandler:   handlers.NewReceiptCreatePOSTHandler(receiptService, c),
-		ReceiptRetrieveGETHandler:  handlers.NewReceiptRetrieveGETHandler(receiptService),
-		ReceiptsListGETHandler:     handlers.NewReceiptsListGETHandler(receiptService),
-		ReceiptDeleteDELETEHandler: handlers.NewReceiptDeleteDELETEHandler(receiptService),
-		ReceiptUpdatePATCHHandler:  handlers.NewReceiptUpdatePATCHHandler(receiptService, c),
+		ReceiptCreatePOSTHandler:         handlers.NewReceiptCreatePOSTHandler(receiptService, c),
+		ReceiptCreateCompletePOSTHandler: handlers.NewReceiptCreateCompletePOSTHandler(receiptService, c),
+		ReceiptRetrieveGETHandler:        handlers.NewReceiptRetrieveGETHandler(receiptService),
+		ReceiptsListGETHandler:           handlers.NewReceiptsListGETHandler(receiptService),
+		ReceiptDeleteDELETEHandler:       handlers.NewReceiptDeleteDELETEHandler(receiptService),
+		ReceiptUpdatePATCHHandler:        handlers.NewReceiptUpdatePATCHHandler(receiptService, c),
 
 		ProductCreatePOSTHandler:     handlers.NewProductCreatePOSTHandler(productService),
 		ProductRetrieveGETHandler:    handlers.NewProductRetrieveGETHandler(productService),
@@ -193,8 +192,5 @@ func BuildHandlerContainer(c *config.Config) (*HandlerContainer, error) {
 		ReceiptTotalGETHandler:              handlers.NewReceiptTotalGETHandler(saleService),
 		SalesStatsByProductGETHandler:       handlers.NewSalesStatsByProductGETHandler(saleService),
 		TopSellingProductsGETHandler:        handlers.NewTopSellingProductsGETHandler(saleService),
-		CheckCreatePOSTHandler:              handlers.NewCheckCreatePOSTHandler(checkService, c),
-		ChecksListGETHandler:                handlers.NewChecksListGETHandler(checkService),
-		CheckRetrieveGETHandler:             handlers.NewCheckRetrieveGETHandler(checkService),
 	}, nil
 }

@@ -40,6 +40,7 @@ func SetupRoutes(c *ioc.HandlerContainer) *gin.Engine {
 		api.PATCH("/employees/:id", c.EmployeeUpdatePATCHHandler)
 
 		api.POST("/receipts", c.ReceiptCreatePOSTHandler)
+		api.POST("/receipts/complete", c.ReceiptCreateCompletePOSTHandler)
 		api.GET("/receipts", c.ReceiptsListGETHandler)
 		api.GET("/receipts/:receipt_number", c.ReceiptRetrieveGETHandler)
 		api.DELETE("/receipts/:receipt_number", c.ReceiptDeleteDELETEHandler)
@@ -81,10 +82,6 @@ func SetupRoutes(c *ioc.HandlerContainer) *gin.Engine {
 		api.PATCH("/sales/:upc/:receipt_number", c.SaleUpdatePATCHHandler)
 
 		api.GET("/receipts/:receipt_number/total", c.ReceiptTotalGETHandler)
-
-		api.POST("/checks", c.CheckCreatePOSTHandler)
-		api.GET("/checks", c.ChecksListGETHandler)
-		api.GET("/checks/:receipt_number", c.CheckRetrieveGETHandler)
 	}
 	return router
 }

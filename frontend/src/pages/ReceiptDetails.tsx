@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { fetchCheckDetails, fetchCheckSalesWithDetails } from "../api/checks";
+import { fetchReceiptDetails, fetchReceiptSalesWithDetails } from "../api/receipts";
 import { fetchEmployee } from "../api/employees";
 import { getCustomerCard } from "../api/customer_cards";
-import type { Check } from "../types/check";
+import type { ReceiptRetrieve } from "../types/receipt";
 import type { Employee } from "../types/employee";
 import type { CustomerCard } from "../types/customer_card";
 import type { SaleWithDetails } from "../types/sale";
 
-const CheckDetails: React.FC = () => {
+const ReceiptDetails: React.FC = () => {
   const { receipt_number } = useParams<{ receipt_number: string }>();
-  const [check, setCheck] = useState<Check | null>(null);
+  const [receipt, setReceipt] = useState<ReceiptRetrieve | null>(null);
   const [cashier, setCashier] = useState<Employee | null>(null);
   const [customerCard, setCustomerCard] = useState<CustomerCard | null>(null);
   const [sales, setSales] = useState<SaleWithDetails[]>([]);
@@ -22,19 +22,19 @@ const CheckDetails: React.FC = () => {
     setLoading(true);
     setError(null);
     Promise.all([
-      fetchCheckDetails(receipt_number),
-      fetchCheckSalesWithDetails(receipt_number)
+      fetchReceiptDetails(receipt_number),
+      fetchReceiptSalesWithDetails(receipt_number)
     ])
-      .then(async ([checkRes, salesRes]) => {
-        setCheck(checkRes.data);
+      .then(async ([receiptRes, salesRes]) => {
+        setReceipt(receiptRes.data);
         setSales(salesRes.data);
         // Fetch cashier
-        const cashierRes = await fetchEmployee(checkRes.data.employee_id);
+        const cashierRes = await fetchEmployee(receiptRes.data.employee_id);
         setCashier(cashierRes.data);
         // Fetch customer card if present
-        if (checkRes.data.card_number) {
+        if (receiptRes.data.card_number) {
           try {
-            const cardRes = await getCustomerCard(checkRes.data.card_number);
+            const cardRes = await getCustomerCard(receiptRes.data.card_number);
             setCustomerCard(cardRes);
           } catch {
             setCustomerCard(null);
@@ -44,22 +44,22 @@ const CheckDetails: React.FC = () => {
         }
       })
       .catch((err) => {
-        setError(err?.response?.data?.error || err.message || "Failed to load check details");
+        setError(err?.response?.data?.error || err.message || "Failed to load receipt details");
       })
       .finally(() => setLoading(false));
   }, [receipt_number]);
 
   if (loading) return <div className="p-8">Loading...</div>;
   if (error) return <div className="p-8 text-red-600">{error}</div>;
-  if (!check) return <div className="p-8">Check not found.</div>;
+  if (!receipt) return <div className="p-8">Receipt not found.</div>;
 
   return (
     <div className="max-w-lg mx-auto p-6 bg-white rounded shadow mt-6">
       <div className="mb-4 flex justify-between items-center">
-        <h2 className="text-xl font-bold">Receipt #{check.receipt_number}</h2>
-        <Link to="/checks" className="text-blue-600 hover:underline">Back to list</Link>
+        <h2 className="text-xl font-bold">Receipt #{receipt.receipt_number}</h2>
+        <Link to="/receipts" className="text-blue-600 hover:underline">Back to list</Link>
       </div>
-      <div className="mb-2 text-sm text-gray-600">Date: {check.print_date}</div>
+      <div className="mb-2 text-sm text-gray-600">Date: {receipt.print_date}</div>
       <div className="mb-2 text-sm text-gray-600">
         <span className="font-semibold">Cashier:</span>{" "}
         {cashier ? (
@@ -102,28 +102,28 @@ const CheckDetails: React.FC = () => {
       <div className="border-b my-4" />
       <div className="flex justify-between text-sm mb-1">
         <span>Subtotal:</span>
-        <span>{check.sum_total.toFixed(2)}</span>
+        <span>{receipt.sum_total.toFixed(2)}</span>
       </div>
       {customerCard && customerCard.percent > 0 && (
         <div className="flex justify-between text-sm mb-1">
           <span>Discount ({customerCard.percent}%):</span>
-          <span>-{(check.sum_total * customerCard.percent / 100).toFixed(2)}</span>
+          <span>-{(receipt.sum_total * customerCard.percent / 100).toFixed(2)}</span>
         </div>
       )}
       <div className="flex justify-between text-sm mb-1">
         <span>VAT:</span>
-        <span>{check.vat.toFixed(2)}</span>
+        <span>{receipt.vat.toFixed(2)}</span>
       </div>
       <div className="flex justify-between text-base font-bold mt-2">
         <span>Total:</span>
         <span>
           {customerCard && customerCard.percent > 0
-            ? (check.sum_total - (check.sum_total * customerCard.percent / 100)).toFixed(2)
-            : check.sum_total.toFixed(2)}
+            ? (receipt.sum_total - (receipt.sum_total * customerCard.percent / 100)).toFixed(2)
+            : receipt.sum_total.toFixed(2)}
         </span>
       </div>
     </div>
   );
 };
 
-export default CheckDetails; 
+export default ReceiptDetails;
