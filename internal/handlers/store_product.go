@@ -328,7 +328,7 @@ func NewStoreProductUpdatePATCHHandler(service storeProductUpdater) gin.HandlerF
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: promotional product can not have a promotion"})
 				return
 			}
-			if req.SellingPrice != nil {
+			if req.SellingPrice != nil && storeProductCorrentState.SellingPrice != *req.SellingPrice {
 				log.Printf("[StoreProductUpdatePATCH] promotional product selling price is fixed %s: ", upc)
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input: promotional product selling price is fixed"})
 				return

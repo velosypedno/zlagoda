@@ -1,28 +1,35 @@
 import { useState, useEffect } from "react";
-import type { StoreProductWithDetails, StoreProductCreate, StoreProductUpdate } from "../types/store_product";
+import type {
+  StoreProductWithDetails,
+  StoreProductCreate,
+  StoreProductUpdate,
+} from "../types/store_product";
 import type { Product } from "../types/product";
 import type { Category } from "../types/category";
-import { 
-  fetchStoreProductsWithDetails, 
+import {
+  fetchStoreProductsWithDetails,
   fetchStoreProductsByCategory,
   fetchStoreProductsByName,
-  createStoreProduct, 
-  updateStoreProduct, 
+  createStoreProduct,
+  updateStoreProduct,
   deleteStoreProduct,
-  updateProductQuantity 
+  updateProductQuantity,
 } from "../api/store_products";
 import { fetchProducts } from "../api/products";
 import { fetchCategories } from "../api/categories";
 import StoreProductCard from "../components/StoreProductCard";
 
 const StoreProducts = () => {
-  const [storeProducts, setStoreProducts] = useState<StoreProductWithDetails[]>([]);
+  const [storeProducts, setStoreProducts] = useState<StoreProductWithDetails[]>(
+    [],
+  );
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [editingStoreProduct, setEditingStoreProduct] = useState<StoreProductWithDetails | null>(null);
+  const [editingStoreProduct, setEditingStoreProduct] =
+    useState<StoreProductWithDetails | null>(null);
   const [formData, setFormData] = useState<StoreProductCreate>({
     upc: "",
     upc_prom: "",
@@ -36,8 +43,11 @@ const StoreProducts = () => {
   const [selectedCategory, setSelectedCategory] = useState<number>(0);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [upcSearch, setUpcSearch] = useState<string>("");
-  const [showPromotionalOnly, setShowPromotionalOnly] = useState<boolean>(false);
-  const [sortBy, setSortBy] = useState<"product_name" | "upc" | "selling_price" | "products_number">("product_name");
+  const [showPromotionalOnly, setShowPromotionalOnly] =
+    useState<boolean>(false);
+  const [sortBy, setSortBy] = useState<
+    "product_name" | "upc" | "selling_price" | "products_number"
+  >("product_name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
@@ -48,14 +58,31 @@ const StoreProducts = () => {
     loadFilteredStoreProducts();
   }, [selectedCategory, searchTerm, showPromotionalOnly]);
 
+  // Debug form data changes
+  useEffect(() => {
+    console.log("FormData changed:", formData);
+  }, [formData]);
+
+  // Debug products array changes
+  useEffect(() => {
+    console.log("Products array changed:", products.length, "products");
+    if (products.length > 0) {
+      console.log("First product structure:", products[0]);
+      console.log("Product keys:", Object.keys(products[0]));
+      console.log("Product.product_id specifically:", products[0].product_id);
+      console.log("All products:", products);
+    }
+  }, [products]);
+
   const loadData = async () => {
     try {
       setLoading(true);
-      const [storeProductsData, productsData, categoriesData] = await Promise.all([
-        fetchStoreProductsWithDetails(),
-        fetchProducts(),
-        fetchCategories(),
-      ]);
+      const [storeProductsData, productsData, categoriesData] =
+        await Promise.all([
+          fetchStoreProductsWithDetails(),
+          fetchProducts(),
+          fetchCategories(),
+        ]);
       setStoreProducts(storeProductsData.data || []);
       setProducts(productsData.data || []);
       setCategories(categoriesData.data || []);
@@ -72,20 +99,23 @@ const StoreProducts = () => {
     try {
       setLoading(true);
       let storeProductsData;
-      
+
       if (searchTerm.trim()) {
         storeProductsData = await fetchStoreProductsByName(searchTerm.trim());
       } else if (selectedCategory > 0) {
-        storeProductsData = await fetchStoreProductsByCategory(selectedCategory);
+        storeProductsData =
+          await fetchStoreProductsByCategory(selectedCategory);
       } else {
         storeProductsData = await fetchStoreProductsWithDetails();
       }
-      
+
       let filteredProducts = storeProductsData.data || [];
       if (showPromotionalOnly) {
-        filteredProducts = filteredProducts.filter(p => p.promotional_product);
+        filteredProducts = filteredProducts.filter(
+          (p) => p.promotional_product,
+        );
       }
-      
+
       setStoreProducts(filteredProducts);
       setError(null);
     } catch (err) {
@@ -96,7 +126,9 @@ const StoreProducts = () => {
     }
   };
 
-  const handleSort = (field: "product_name" | "upc" | "selling_price" | "products_number") => {
+  const handleSort = (
+    field: "product_name" | "upc" | "selling_price" | "products_number",
+  ) => {
     if (sortBy === field) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
@@ -108,7 +140,7 @@ const StoreProducts = () => {
   const getSortedStoreProducts = () => {
     return [...storeProducts].sort((a, b) => {
       let aValue, bValue;
-      
+
       switch (sortBy) {
         case "product_name":
           aValue = a.product_name.toLowerCase();
@@ -130,7 +162,7 @@ const StoreProducts = () => {
           aValue = a.product_name.toLowerCase();
           bValue = b.product_name.toLowerCase();
       }
-      
+
       if (sortOrder === "asc") {
         return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
       } else {
@@ -167,8 +199,13 @@ const StoreProducts = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.upc || formData.product_id === 0 || formData.selling_price <= 0 || formData.products_number < 0) {
+
+    if (
+      !formData.upc ||
+      formData.product_id === 0 ||
+      formData.selling_price <= 0 ||
+      formData.products_number < 0
+    ) {
       setError("Please fill in all required fields correctly");
       return;
     }
@@ -191,7 +228,7 @@ const StoreProducts = () => {
       } else {
         await createStoreProduct(formData);
       }
-      
+
       setShowForm(false);
       setEditingStoreProduct(null);
       setFormData({
@@ -329,7 +366,7 @@ const StoreProducts = () => {
             <input
               type="text"
               value={upcSearch}
-              onChange={e => setUpcSearch(e.target.value)}
+              onChange={(e) => setUpcSearch(e.target.value)}
               placeholder="Enter UPC..."
               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -342,7 +379,15 @@ const StoreProducts = () => {
             </label>
             <select
               value={sortBy}
-              onChange={(e) => handleSort(e.target.value as "product_name" | "upc" | "selling_price" | "products_number")}
+              onChange={(e) =>
+                handleSort(
+                  e.target.value as
+                    | "product_name"
+                    | "upc"
+                    | "selling_price"
+                    | "products_number",
+                )
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="product_name">Product Name</option>
@@ -398,7 +443,9 @@ const StoreProducts = () => {
       {showForm && (
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <h2 className="text-xl font-semibold mb-4">
-            {editingStoreProduct ? "Edit Store Product" : "Add New Store Product"}
+            {editingStoreProduct
+              ? "Edit Store Product"
+              : "Add New Store Product"}
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -409,16 +456,17 @@ const StoreProducts = () => {
                 <input
                   type="text"
                   value={formData.upc}
-                  onChange={(e) => setFormData({ ...formData, upc: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, upc: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   maxLength={12}
                   required
                   disabled={!!editingStoreProduct}
                 />
               </div>
-              
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -426,19 +474,33 @@ const StoreProducts = () => {
                 </label>
                 <select
                   value={formData.product_id}
-                  onChange={(e) => setFormData({ ...formData, product_id: parseInt(e.target.value) })}
+                  onChange={(e) => {
+                    console.log("Product selection changed:", e.target.value);
+                    console.log("Products array at selection:", products);
+                    const selectedProduct = products.find(
+                      (p) => p.product_id === parseInt(e.target.value),
+                    );
+                    console.log("Selected product object:", selectedProduct);
+                    setFormData({
+                      ...formData,
+                      product_id: parseInt(e.target.value),
+                    });
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 >
                   <option value={0}>Select a product</option>
                   {products.map((product) => (
-                    <option key={product.id} value={product.id}>
-                      {product.name}
+                    <option
+                      key={`product-${product.product_id}`}
+                      value={product.product_id}
+                    >
+                      {product.name} (ID: {product.product_id})
                     </option>
                   ))}
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Selling Price *
@@ -448,13 +510,18 @@ const StoreProducts = () => {
                   step="0.01"
                   min="0"
                   value={formData.selling_price}
-                  onChange={(e) => setFormData({ ...formData, selling_price: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      selling_price: parseFloat(e.target.value) || 0,
+                    })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -464,18 +531,25 @@ const StoreProducts = () => {
                   type="number"
                   min="0"
                   value={formData.products_number}
-                  onChange={(e) => setFormData({ ...formData, products_number: parseInt(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      products_number: parseInt(e.target.value) || 0,
+                    })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
-              
+
               <div className="flex items-center">
                 <label className="flex items-center">
                   <input
                     type="checkbox"
                     checked={formData.promotional_product}
-                    onChange={(e) => handlePromotionalCheckboxChange(e.target.checked)}
+                    onChange={(e) =>
+                      handlePromotionalCheckboxChange(e.target.checked)
+                    }
                     className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <span className="text-sm font-medium text-gray-700">
@@ -484,7 +558,7 @@ const StoreProducts = () => {
                 </label>
               </div>
             </div>
-            
+
             <div className="flex space-x-4">
               <button
                 type="submit"
@@ -511,7 +585,7 @@ const StoreProducts = () => {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {getSortedStoreProducts()
-            .filter(product => {
+            .filter((product) => {
               const upcQ = upcSearch.trim().toLowerCase();
               return !upcQ || product.upc.toLowerCase().includes(upcQ);
             })
@@ -531,4 +605,4 @@ const StoreProducts = () => {
   );
 };
 
-export default StoreProducts; 
+export default StoreProducts;

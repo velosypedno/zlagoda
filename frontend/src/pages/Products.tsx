@@ -1,7 +1,14 @@
 import { useState, useEffect } from "react";
 import type { Product, ProductCreate, ProductUpdate } from "../types/product";
 import type { Category } from "../types/category";
-import { fetchProducts, fetchProductsByCategory, fetchProductsByName, createProduct, updateProduct, deleteProduct } from "../api/products";
+import {
+  fetchProducts,
+  fetchProductsByCategory,
+  fetchProductsByName,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+} from "../api/products";
 import { fetchCategories } from "../api/categories";
 import ProductCard from "../components/ProductCard";
 
@@ -54,7 +61,7 @@ const Products = () => {
     try {
       setLoading(true);
       let productsData;
-      
+
       if (searchTerm.trim()) {
         productsData = await fetchProductsByName(searchTerm.trim());
       } else if (selectedCategory > 0) {
@@ -62,7 +69,7 @@ const Products = () => {
       } else {
         productsData = await fetchProducts();
       }
-      
+
       setProducts(productsData.data || []);
       setError(null);
     } catch (err) {
@@ -85,15 +92,15 @@ const Products = () => {
   const getSortedProducts = () => {
     return [...products].sort((a, b) => {
       let aValue, bValue;
-      
+
       if (sortBy === "name") {
         aValue = a.name.toLowerCase();
         bValue = b.name.toLowerCase();
       } else {
-        aValue = a.id;
-        bValue = b.id;
+        aValue = a.product_id;
+        bValue = b.product_id;
       }
-      
+
       if (sortOrder === "asc") {
         return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
       } else {
@@ -121,8 +128,12 @@ const Products = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.name || !formData.characteristics || formData.category_id === 0) {
+
+    if (
+      !formData.name ||
+      !formData.characteristics ||
+      formData.category_id === 0
+    ) {
       setError("Please fill in all required fields");
       return;
     }
@@ -134,11 +145,11 @@ const Products = () => {
           characteristics: formData.characteristics,
           category_id: formData.category_id,
         };
-        await updateProduct(editingProduct.id, updateData);
+        await updateProduct(editingProduct.product_id, updateData);
       } else {
         await createProduct(formData);
       }
-      
+
       setShowForm(false);
       setEditingProduct(null);
       setFormData({ name: "", characteristics: "", category_id: 0 });
@@ -296,32 +307,41 @@ const Products = () => {
               <input
                 type="text"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Characteristics *
               </label>
               <textarea
                 value={formData.characteristics}
-                onChange={(e) => setFormData({ ...formData, characteristics: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, characteristics: e.target.value })
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 rows={3}
                 required
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Category *
               </label>
               <select
                 value={formData.category_id}
-                onChange={(e) => setFormData({ ...formData, category_id: parseInt(e.target.value) })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    category_id: parseInt(e.target.value),
+                  })
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               >
@@ -333,7 +353,7 @@ const Products = () => {
                 ))}
               </select>
             </div>
-            
+
             <div className="flex space-x-4">
               <button
                 type="submit"
@@ -361,7 +381,7 @@ const Products = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {getSortedProducts().map((product) => (
             <ProductCard
-              key={product.id}
+              key={product.product_id}
               product={product}
               categories={categories}
               onEdit={handleEdit}
@@ -374,4 +394,4 @@ const Products = () => {
   );
 };
 
-export default Products; 
+export default Products;
